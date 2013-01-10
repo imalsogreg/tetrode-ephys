@@ -1,4 +1,4 @@
-haskell_tetrode_ephys
+haskell-tetrode-ephys
 =====================
 
 Libraries for single-unit recording data
