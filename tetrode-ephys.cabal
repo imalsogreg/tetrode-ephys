@@ -31,7 +31,9 @@ Library
     , time   (>= 1.3  && < 1.6)
     , bytestring (>= 0.10.0 && <= 0.11.0)
     , safecopy 
+    , parsec
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
     Data.Ephys.Spike
+    Data.OldMWL.FileHeader
