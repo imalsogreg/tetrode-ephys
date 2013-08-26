@@ -32,6 +32,8 @@ Library
     , bytestring (>= 0.10.0 && <= 0.11.0)
     , safecopy 
     , parsec
+    , hashable
+    , vector-binary-instances
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs

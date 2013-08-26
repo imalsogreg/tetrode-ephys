@@ -16,7 +16,7 @@ import Data.Ephys.EphysDefs
 type Waveform = U.Vector Voltage
 
 -- |Representation of an action potential recorded on a tetrode
-data TrodeSpike = TrodeSpike { spikeTrodeName :: !Text
+data TrodeSpike = TrodeSpike { spikeOptsHash  :: !Text
                              , spikeTime      :: ExperimentTime
                              , spikeWaveforms :: V.Vector Waveform
                              }
@@ -56,4 +56,7 @@ data PolarSpikeModel = PolarSpikeModel { pSpikeTime      :: ExperimentTime
                                        , pSpikeAngles    :: V.Vector Double
                                        } deriving (Show)
 
-
+-- This should be part of arte, not tetrode-ephys?  It's about recording
+-- But I need it to decode files...
+data SpikeRecordOpts = SpikeRecordOpts { spikeFilterSpec :: 
+                                       , 
