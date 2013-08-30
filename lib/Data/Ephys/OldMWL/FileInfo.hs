@@ -19,14 +19,13 @@ module Data.Ephys.OldMWL.FileInfo where
 -- I may not have dealt with this the right way for all types of files.
 --------------------------------------------------------------------------------
 
-import Text.Parsec
+--import Text.Parsec
 
 data FileType = Binary | Ascii deriving (Eq, Show)
 data RecordMode = Spike | Continuous deriving (Eq, Show)
 type DatumName = String
 
-data RecordDescr = RecordDescr [(DatumName, DatumType, DatumRepeatCount)]
-                   deriving (Eq, Show)
+type RecordDescr = (DatumName, DatumType, DatumRepeatCount)
 
 type DatumRepeatCount = Int
 data DatumType = DInvalid
@@ -41,14 +40,15 @@ data DatumType = DInvalid
                | DUnknown
                deriving (Eq, Ord, Show)
 
+datumTypeIntMap :: [(DatumType, Int)]
 datumTypeIntMap = [(DInvalid, 0),(DChar, 1),(DShort,2),(DInt,3)
                   ,(DFloat,4),(DDouble,5),(DFunc,6),(DFFunc,7)
                   ,(DULong,8),(DUnknown,-1)]
-
-datumTypeToIntegral d = maybe (-1) id (lookup datumTypeIntMap d)
-
+datumTypeToIntegral :: DatumType -> Int
+datumTypeToIntegral d = maybe (-1) id (lookup d datumTypeIntMap)
+datumTypeFromIntegral :: Int -> DatumType
 datumTypeFromIntegral i =
-  maybe DUnknown id (lookup (map(\(a,b)->(b,a)) datumTypeIntMap) i)
+  maybe DUnknown id (lookup i (map(\(a,b)->(b,a)) datumTypeIntMap))
 
 data FileInfo = FileInfo { hProgram     :: String
                          , hVersion     :: String

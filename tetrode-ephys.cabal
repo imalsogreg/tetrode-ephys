@@ -38,4 +38,5 @@ Library
     Data.Ephys
     Data.Ephys.EphysDefs
     Data.Ephys.Spike
-    Data.OldMWL.FileHeader
+    Data.Ephys.OldMWL.FileInfo
+    Data.Ephys.OldMWL.Parse
