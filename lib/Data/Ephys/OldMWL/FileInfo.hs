@@ -19,13 +19,40 @@ module Data.Ephys.OldMWL.FileInfo where
 -- I may not have dealt with this the right way for all types of files.
 --------------------------------------------------------------------------------
 
---import Text.Parsec
+import Text.ParserCombinators.Parsec
+import System.IO.Unsafe
+import Data.Char
 
 data FileType = Binary | Ascii deriving (Eq, Show)
 data RecordMode = Spike | Continuous deriving (Eq, Show)
 type DatumName = String
 
 type RecordDescr = (DatumName, DatumType, DatumRepeatCount)
+data ChanDescr = ChanDescr AmpGain AdGain FilterCode Threshold ColorCode
+                 deriving (Eq, Show)
+type AmpGain = Double
+type AdGain  = Double
+type FilterCode = Int
+type Threshold = Double
+type ColorCode = Int
+
+data FileInfo = FileInfo { hProgram     :: String
+                         , hVersion     :: String
+                         , hArgv        :: [String]
+                         , hDate        :: String
+                         , hDir         :: String
+                         , hHostname    :: String
+                         , hArch        :: String
+                         , hUser        :: String
+                         , hFileType    :: FileType
+                         , hExtractT    :: String
+                         , hProbe       :: Int
+                         , hNTrodes     :: Int
+                         , hNTrodeChans :: Int
+                         , hRecMode     :: RecordMode
+                         , hRecordDescr :: [RecordDescr]
+                         , hChanDescrs  :: [ChanDescr]
+                         } deriving (Eq, Show)
 
 type DatumRepeatCount = Int
 data DatumType = DInvalid
@@ -50,29 +77,52 @@ datumTypeFromIntegral :: Int -> DatumType
 datumTypeFromIntegral i =
   maybe DUnknown id (lookup i (map(\(a,b)->(b,a)) datumTypeIntMap))
 
-data FileInfo = FileInfo { hProgram     :: String
-                         , hVersion     :: String
-                         , hArgv        :: [String]
-                         , hDate        :: String
-                         , hDir         :: String
-                         , hHostname    :: String
-                         , hArch        :: String
-                         , hUser        :: String
-                         , hFileType    :: FileType
-                         , hExtractT    :: String
-                         , hProbe       :: Int
-                         , hNTrodes     :: Int
-                         , hNTrodeChans :: Int
-                         , hRecMode     :: RecordMode
-                         , hRecordDescr :: [RecordDescr]
-                         , hChanDescrs  :: [ChanDescr]
-                         } deriving (Eq, Show)
+pFileHeader :: CharParser () [(String, Maybe String)]
+pFileHeader = do
+  string "%%BEGINHEADER\n"
+  pairs <- many pHeaderLine
+
+  string "%%ENDHEADER\n"
+  error "got here"
+  return pairs
+
+pHeaderLine :: CharParser () (String, Maybe String)
+pHeaderLine = do
+  char '%'
+  entry <- try pPair
+    <|> try pUnusedLine
+--    <|> try pMalformedPair
+    <?> "unparsable line"
+  return entry
+
+pPair :: CharParser () (String, Maybe String)
+pPair = do
+  char ' '
+  spaces
+  name <- many pKeyChar
+  value <- optionMaybe (pKVSep >> many pValChar)
+  if ("HEADER" `isInfixOf` name) then error "Got HEADER" else return ()
+  char '\n'
+  return (name, value)
 
 
-data ChanDescr = ChanDescr AmpGain AdGain FilterCode Threshold ColorCode
-                 deriving (Eq, Show)
-type AmpGain = Double
-type AdGain  = Double
-type FilterCode = Int
-type Threshold = Double
-type ColorCode = Int
+pMalformedPair :: CharParser () (String, Maybe String)
+pMalformedPair = do
+  spaces
+  name <- many (noneOf "\n")
+  char '\n'
+  return (name,Nothing)
+
+pUnusedLine :: CharParser () (String, Maybe String)
+pUnusedLine = do
+  char '\n'
+  return ("",Nothing)
+
+pKVSep :: CharParser () [Char]
+pKVSep = char ':' >> many (char ' ' <|> char '\t')
+
+pKeyChar :: CharParser () Char
+pKeyChar = noneOf ":\t\n"
+
+pValChar :: CharParser () Char
+pValChar = noneOf "\n"

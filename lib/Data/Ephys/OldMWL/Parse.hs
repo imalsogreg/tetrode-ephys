@@ -3,9 +3,9 @@
 module Data.Ephys.OldMWL.Parse where
 
 import Control.Monad (liftM, forM_, replicateM)
-import Data.ByteString hiding (map, any)
-import Data.Vector hiding (map, forM_, any, replicateM)
-import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_)
+import Data.ByteString hiding (map, any, zipWith)
+import Data.Vector hiding (map, forM_, any, replicateM, zipWith)
+import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith)
 import Data.Serialize
 import Data.SafeCopy
 import Data.Vector.Binary
@@ -42,8 +42,9 @@ parseSpike fi@FileInfo{..}
         (Just (_,wfType,wfCount)) = lookup "waveform"  (map (\(n,a,b) -> (n,(n,a,b))) hRecordDescr)
         nChans                    = hNTrodeChans
         nSampsPerChan = wfCount `div` nChans
+        gains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
     in do
       ts <- get
       wfs <- replicateM nChans $ do
-        liftM fromList (replicateM nSampsPerChan get)
+        liftM (fromList . zipWith decodeVoltage gains) (replicateM nSampsPerChan get)
       return $ MWLSpike ts wfs
