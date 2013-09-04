@@ -20,6 +20,9 @@ module Data.Ephys.OldMWL.FileInfo where
 --------------------------------------------------------------------------------
 
 import Control.Monad
+import Control.Applicative ((<$>),(<*>))
+import Data.Traversable (traverse)
+import Data.Maybe (fromJust)
 import Text.ParserCombinators.Parsec
 --import System.IO.Unsafe
 import Data.List (isInfixOf,isSuffixOf)
@@ -41,18 +44,13 @@ readExtractionType "tetrode waveforms" = TetrodeWaveforms
 type DatumName = String
 
 type RecordDescr = (DatumName, DatumType, DatumRepeatCount)
-data ChanDescr = ChanDescr {ampGain :: Double
-                           ,adGain  :: Double
-                           ,filterCode :: Int
-                           ,threshold :: Double
-                           ,colorCode :: Int
+data ChanDescr = ChanDescr {ampGain    :: Double
+                           ,adGain     :: Double
+                           ,filterCode :: Integer
+                           ,threshold  :: Double
+                           ,colorCode  :: Integer
                            }
                  deriving (Eq, Show)
-type AmpGain = Double
-type AdGain  = Double
-type FilterCode = Int
-type Threshold = Double
-type ColorCode = Int
 
 data FileInfo = FileInfo { hProgram     :: String
                          , hVersion     :: String
@@ -64,11 +62,12 @@ data FileInfo = FileInfo { hProgram     :: String
                          , hUser        :: String
                          , hFileType    :: FileType
                          , hExtractT    :: ExtractionType
-                         , hProbe       :: Int
+                         , hProbe       :: Integer
                          , hRecordDescr :: [RecordDescr]
                          , hRate        :: Double
-                         , hNTrodes     :: Int
-                         , hNTrodeChans :: Int
+                         , hNTrodes     :: Integer
+                         , hNChans      :: Integer
+                         , hNTrodeChans :: Integer
                          , hRecMode     :: RecordMode
                          , hChanDescrs  :: [ChanDescr]
                          } deriving (Eq, Show)
@@ -81,7 +80,7 @@ parseFields = parseField `sepBy` (char '\t' <|> char ' ')
 parseField :: CharParser () RecordDescr
 parseField = do
   fieldName <- many (noneOf ",")
-  datumSize  <- many digit
+  _  <- many digit  -- We ignore the size field from the file b/c it's fixed by the type
   char ','
   datumCode  <- many digit
   char ','
@@ -95,46 +94,30 @@ getFileInfo fn = do
       grab k = case Map.lookup k pMap of
         Just v  -> Right v
         Nothing -> Left $ "Error getting field " ++ show k
-      nChans = length $ Prelude.filter ("threshold" `isSuffixOf`) (Map.keys pMap)
-      mFileInfo = do
-        progName    <- grab "Program"
-        progVers    <- grab "Program Version"
-        progNArg    <- read `liftM` grab "Argc" :: Either String Integer
-        progArgs    <- mapM grab ["Argv[" ++ show n ++ "]" | n <- [1..progNArg - 1]]
-        progDate    <- grab "Date"
-        progDir     <- grab "Directory"
-        progHost    <- grab "Hostname"
-        progArch    <- grab "Architecture"
-        progUser    <- grab "User"
-        progFType   <- read `liftM` grab "File type"
-        progExtract <- readExtractionType `liftM` grab "Extraction type"
-        progRecords <- case parse parseFields "MWL Header Fields" `liftM` grab "Fields" of -- ONLY GETTING 1 FIELD
-          Right (Right okRecords) -> Right okRecords
-          Right (Left _) -> Left "Error processing fields"
-        progProbe   <- read `liftM` grab "Probe"
-        progRate    <- read `liftM` grab "rate"
-        progNTrodes <- read `liftM` grab "nelectrodes"
-        progNChans  <- read `liftM` grab "nchannels"
-        progNEChans <- read `liftM` grab "nelect_chan"
-        progMode    <- readRecordMode `liftM` grab "mode"
-        progChanDs  <- mapM (grabChannelDescr pMap) [0 .. progNChans - 1]
-        return $ FileInfo {hProgram=progName
-                          ,hVersion=progVers
-                          ,hArgv=progArgs
-                          ,hDate=progDate
-                          ,hDir=progDir
-                          ,hHostname=progHost
-                          ,hArch=progArch
-                          ,hUser=progUser
-                          ,hFileType=progFType
-                          ,hExtractT=progExtract
-                          ,hRecordDescr=progRecords
-                          ,hProbe=progProbe
-                          ,hRate=progRate
-                          ,hNTrodes=progNTrodes
-                          ,hNTrodeChans=progNEChans
-                          ,hRecMode=progMode
-                          ,hChanDescrs=progChanDs}
+      nChans = fromIntegral . length $ Prelude.filter ("threshold" `isSuffixOf`) (Map.keys pMap)
+      progNArg = read $ either (const "0") (id) $ grab "Argc" :: Integer
+      mFileInfo = FileInfo
+                  <$> grab "Program"
+                  <*> grab "Program Version"
+                  <*> traverse grab ["Argv[" ++ show n ++ "]" | n <- [1..progNArg - 1]]
+                  <*> grab "Date"
+                  <*> grab "Directory"
+                  <*> grab "Hostname"
+                  <*> grab "Architecture"
+                  <*> grab "User"
+                  <*> read `liftM` grab "File type"
+                  <*> readExtractionType `liftM` grab "Extraction type"
+                  <*> read `liftM` grab "Probe"
+                  <*> either (Left . show) (Right . id)  -- There must be a better way than this.
+                  (parse parseFields "MWL Header Fields" (either (const "") id $ grab "Fields"))
+
+                  <*> read `liftM` grab "rate"
+                  <*> read `liftM` grab "nelectrodes"
+                  <*> read `liftM` grab "nchannels"
+                  <*> read `liftM` grab "nelect_chan"
+                  <*> readRecordMode `liftM` grab "mode"
+                  <*> traverse (grabChannelDescr pMap) [0 .. nChans - 1] :: Either String FileInfo
+
   case mFileInfo of
     Left e -> error $ "Error getting FileInfo: " ++ e
     Right fi -> return fi
@@ -152,7 +135,7 @@ grabChannelDescr m n = let grab k = case Map.lookup k m of
   col      <- grab (unwords ["channel", show n, "color"])
   return $ ChanDescr (read ampGain) (read adGain) (read filtCode) (read thresh) (read col)
 
-type DatumRepeatCount = Int
+type DatumRepeatCount = Integer
 data DatumType = DInvalid
                | DChar
                | DShort
@@ -165,13 +148,13 @@ data DatumType = DInvalid
                | DUnknown
                deriving (Eq, Ord, Show)
 
-datumTypeIntMap :: [(DatumType, Int)]
+datumTypeIntMap :: [(DatumType, Integer)]
 datumTypeIntMap = [(DInvalid, 0),(DChar, 1),(DShort,2),(DInt,3)
                   ,(DFloat,4),(DDouble,5),(DFunc,6),(DFFunc,7)
                   ,(DULong,8),(DUnknown,-1)]
-datumTypeToIntegral :: DatumType -> Int
+datumTypeToIntegral :: DatumType -> Integer
 datumTypeToIntegral d = maybe (-1) id (Prelude.lookup d datumTypeIntMap)
-datumTypeFromIntegral :: Int -> DatumType
+datumTypeFromIntegral :: Integer -> DatumType
 datumTypeFromIntegral i =
   maybe DUnknown id (Prelude.lookup i (Prelude.map(\(a,b)->(b,a)) datumTypeIntMap))
 
