@@ -75,14 +75,17 @@ data FileInfo = FileInfo { hProgram     :: String
 type FileName = String
 
 parseFields :: CharParser () [RecordDescr]
-parseFields = parseField `sepBy` (char '\t' <|> char ' ')
+parseFields = do
+  fields <- parseField `sepBy` char '\t'
+  return fields
 
 parseField :: CharParser () RecordDescr
 parseField = do
   fieldName <- many (noneOf ",")
-  _  <- many digit  -- We ignore the size field from the file b/c it's fixed by the type
   char ','
-  datumCode  <- many digit
+  datumCode <- many digit 
+  char ','
+  _  <- many digit  -- We ignore the size field from the file b/c it's fixed by the type
   char ','
   datumCount <- many digit
   return (fieldName, datumTypeFromIntegral (read datumCode), read datumCount)
