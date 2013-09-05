@@ -19,13 +19,21 @@ data MWLSpike = MWLSpike { spikeTime      :: Double
 
 okSpikeFile :: FileInfo -> Bool
 okSpikeFile FileInfo{..} = hRecMode == Spike
-                           && any (\(name,_,_) -> name == "timestamp") hRecordDescr
-                           && any (\(name,_,_) -> name == "waveform")  hRecordDescr
+                           && any (\(name,_,_) -> name == "timestamp") hRecordDescr -- has "timestamp"
+                           && any (\(name,_,_) -> name == "waveform")  hRecordDescr -- has "waveform"
+                           && Prelude.filter (\(name,_,_) -> name == "timestamp") hRecordDescr
+                           == [("timestamp", DULong, 1)]    -- timestamp's time is DULong
+                           && (\[(_,tp,_)] -> tp == DShort)
+                           (Prelude.filter (\(name,_,_) -> name == "waveform") hRecordDescr)
+                           -- waveform elem's type is DShort (16-bit)
 
 writeSpike :: MWLSpike -> Put
 writeSpike (MWLSpike tSpike waveforms) = do put tSpike
                                             forM_ waveforms $ \waveform ->
                                               forM_ (toList waveform) put
+
+decodeTime :: Int32 -> Double
+decodeTime = fromIntegral . (`div` 10000)
 
 decodeVoltage :: Double -> Int16 -> Double
 decodeVoltage gain inV =
@@ -45,6 +53,6 @@ parseSpike fi@FileInfo{..}
         gains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
     in do
       ts <- get
-      wfs <- replicateM nChans $ do
-        liftM (fromList . zipWith decodeVoltage gains) (replicateM nSampsPerChan get)
+      wfs <- replicateM (fromIntegral nChans) $ do
+        liftM (fromList . zipWith decodeVoltage gains) (replicateM (fromIntegral nSampsPerChan) get)
       return $ MWLSpike ts wfs
