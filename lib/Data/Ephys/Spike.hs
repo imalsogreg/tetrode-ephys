@@ -2,6 +2,8 @@
 
 module Data.Ephys.Spike where
 
+import Data.Ephys.TimeSignal.Filter
+
 import Data.Text
 import Data.Time
 import Control.Applicative
@@ -13,12 +15,13 @@ import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Serialize as VS
 import Data.Ephys.EphysDefs 
 
-type Waveform = U.Vector Voltage
+type Waveform = U.Vector Voltage  -- This should be the waveform from Data.Ephys.Waveform probably?
 
 -- |Representation of an action potential recorded on a tetrode
-data TrodeSpike = TrodeSpike { spikeOptsHash  :: !Text
-                             , spikeTime      :: ExperimentTime
-                             , spikeWaveforms :: V.Vector Waveform
+data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Text
+                             , spikeTrodeOptsHash  :: !Text   -- hash hashes values to Text?
+                             , spikeTime           :: ExperimentTime
+                             , spikeWaveforms      :: [Waveform]
                              }
                   deriving (Show)
                   --deriving (Show, Typeable, Data, Generics.Deriving.Generic)
@@ -28,18 +31,9 @@ instance SafeCopy TrodeSpike where
     safePut spikeTrodeName
     safePut spikeTime
     VS.genericPutVector spikeWaveforms
-  getCopy = contain $ TrodeSpike <$> safeGet <*> safeGet <*> VS.genericGetVector
+  getCopy = contain $ TrodeSpike <$> safeGet <*> safeGet <*> safeGet <*> VS.genericGetVector
 
 
-mySpike :: IO TrodeSpike
-mySpike = do
-  t <- getZonedTime
-  return $ TrodeSpike (pack "Hi!") t V.empty
-
-myTest :: IO ()
-myTest = do
-  s <- mySpike
-  print $ runPut (safePut s)
 
 -- |Representation of tetroe-recorded AP features
 data SpikeModel = SpikeModel { mSpikeTime          :: ExperimentTime
@@ -56,7 +50,22 @@ data PolarSpikeModel = PolarSpikeModel { pSpikeTime      :: ExperimentTime
                                        , pSpikeAngles    :: V.Vector Double
                                        } deriving (Show)
 
+
 -- This should be part of arte, not tetrode-ephys?  It's about recording
 -- But I need it to decode files...
-data SpikeRecordOpts = SpikeRecordOpts { spikeFilterSpec :: 
-                                       , 
+data TrodeAcquisitionOpts = TrodeAcquisitionOpts { spikeFilterSpec :: FilterSpec
+                                                 , spikeThresholds :: [Voltage]
+                                                 } deriving (Eq, Show)
+
+
+mySpike :: IO TrodeSpike
+mySpike = return $ TrodeSpike tName tOpts sTime sWF
+  where tName = pack "TestSpikeTrode"
+        tOpts = pack "noOpts"
+        sTime = 10.10
+        sWF = Prelude.take 4 . repeat $ (V.fromList $ [0.0 .. (31.0 :: Voltage)] :: Waveform)
+
+myTest :: IO ()
+myTest = do
+  s <- mySpike
+  print $ runPut (safePut s)
