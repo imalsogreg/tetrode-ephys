@@ -30,11 +30,12 @@ import Data.Map as Map
 
 data FileType = Binary | Ascii deriving (Eq, Show, Read)
 
-data RecordMode = Spike | Continuous deriving (Eq, Show)
+data RecordMode = Spike | Continuous | Tracker deriving (Eq, Show)
 
 readRecordMode :: String -> RecordMode
 readRecordMode "CONTINUOUS" = Continuous
 readRecordMode "SPIKE"      = Spike
+readRecordMode "TRACKER"    = Tracker
 
 data ExtractionType = TetrodeWaveforms deriving (Eq, Show)
 

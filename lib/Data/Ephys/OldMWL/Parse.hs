@@ -19,13 +19,20 @@ data MWLSpike = MWLSpike { spikeTime      :: Double
 
 okSpikeFile :: FileInfo -> Bool
 okSpikeFile FileInfo{..} = hRecMode == Spike
-                           && any (\(name,_,_) -> name == "timestamp") hRecordDescr -- has "timestamp"
-                           && any (\(name,_,_) -> name == "waveform")  hRecordDescr -- has "waveform"
-                           && Prelude.filter (\(name,_,_) -> name == "timestamp") hRecordDescr
-                           == [("timestamp", DULong, 1)]    -- timestamp's time is DULong
-                           && (\[(_,tp,_)] -> tp == DShort)
-                           (Prelude.filter (\(name,_,_) -> name == "waveform") hRecordDescr)
+                           && hRecordDescr `hasField` "timestamp"
+                           && hRecordDescr `hasField` "waveform"
+                           && fieldIsType hRecordDescr "timestamp" DULong
+                           && fieldISType hRecordDescr "waveform"  DShort
                            -- waveform elem's type is DShort (16-bit)
+
+okPosFile :: FileInfo -> Bool
+okPosFile FileInfo{..} = hRecMode == Tracker
+                         && hasFiled hRecordDescr "timestamp"
+                         && hasField hRecordDescr "xfront" && hasField hRecordDiscr "yfront"
+                         && hasField hRecordDescr "xback"  && hasField hRecordDescr "yback"
+
+hasField flds f = any (\(name,_,_) -> name == f) flds
+fieldIsType flds f t = (\[(_,ft)] -> ft == t) (Prelude.filter (\(name,_,_) -> name == f) flds
 
 writeSpike :: MWLSpike -> Put
 writeSpike (MWLSpike tSpike waveforms) = do put tSpike
