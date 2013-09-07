@@ -22,17 +22,22 @@ okSpikeFile FileInfo{..} = hRecMode == Spike
                            && hRecordDescr `hasField` "timestamp"
                            && hRecordDescr `hasField` "waveform"
                            && fieldIsType hRecordDescr "timestamp" DULong
-                           && fieldISType hRecordDescr "waveform"  DShort
+                           && fieldIsType hRecordDescr "waveform"  DShort
                            -- waveform elem's type is DShort (16-bit)
 
 okPosFile :: FileInfo -> Bool
 okPosFile FileInfo{..} = hRecMode == Tracker
-                         && hasFiled hRecordDescr "timestamp"
-                         && hasField hRecordDescr "xfront" && hasField hRecordDiscr "yfront"
-                         && hasField hRecordDescr "xback"  && hasField hRecordDescr "yback"
+                         && hasField hRecordDescr "timestamp"
+                         && hasField hRecordDescr "xfront"
+                         && hasField hRecordDescr "yfront"
+                         && hasField hRecordDescr "xback"
+                         && hasField hRecordDescr "yback"
 
+hasField :: [RecordDescr] -> String -> Bool
 hasField flds f = any (\(name,_,_) -> name == f) flds
-fieldIsType flds f t = (\[(_,ft)] -> ft == t) (Prelude.filter (\(name,_,_) -> name == f) flds
+
+fieldIsType :: [RecordDescr] -> String -> DatumType -> Bool
+fieldIsType flds f t = Prelude.all (==True) [ (fn == f) <= (ft ==t) | (fn,ft,_) <- flds ]
 
 writeSpike :: MWLSpike -> Put
 writeSpike (MWLSpike tSpike waveforms) = do put tSpike
