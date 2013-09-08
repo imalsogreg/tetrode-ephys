@@ -1,9 +1,10 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards, OverloadedStrings #-}
 
 module Data.Ephys.OldMWL.Parse where
 
 import Control.Monad (liftM, forM_, replicateM)
 import Data.ByteString hiding (map, any, zipWith)
+import qualified Data.ByteString as BS
 import Data.Vector hiding (map, forM_, any, replicateM, zipWith)
 import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith)
 import Data.Serialize
@@ -68,3 +69,7 @@ parseSpike fi@FileInfo{..}
       wfs <- replicateM (fromIntegral nChans) $ do
         liftM (fromList . zipWith decodeVoltage gains) (replicateM (fromIntegral nSampsPerChan) get)
       return $ MWLSpike ts wfs
+
+dropHeader :: ByteString -> ByteString
+dropHeader = let headerEnd = "%%ENDHEADER\n" in
+                    BS.drop (BS.length headerEnd) . snd . BS.breakSubstring headerEnd
