@@ -1,8 +1,11 @@
-module Data.Ephys.TimeSignal where
+module Data.Ephys.TimeSignal.Filter where
 
 import Data.Hashable (Hashable(..))
 
-data FilterSpec = FilterSpec Family Response Sharpness
+-- Order of constructor arguments supposed to match natural
+-- language for specifying filters, e.g. "4th order Lowpass Eliptical filter"
+data FilterSpec = FilterSpec Sharpness Response Family
+                deriving (Eq, Show)
 
 data Response = LowPass  Double
               | HighPass Double

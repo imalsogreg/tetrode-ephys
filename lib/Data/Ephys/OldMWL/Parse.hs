@@ -12,6 +12,7 @@ import Data.SafeCopy
 import Data.Vector.Binary
 import GHC.Int
 
+import Data.Ephys.Spike
 import Data.Ephys.OldMWL.FileInfo
 
 data MWLSpike = MWLSpike { spikeTime      :: Double
@@ -52,20 +53,18 @@ decodeVoltage :: Double -> Int16 -> Double
 decodeVoltage gain inV =
   fromIntegral (inV `div` 2^(14 :: Int16)) * 10 / gain
 
+spikeFromMWLSpike :: FileInfo -> MWLSpike -> Spike
+spikeFromMWLSpike FileInfe{..} MWLSpike{..} =
+
 parseSpike :: FileInfo -> Get MWLSpike
 parseSpike fi@FileInfo{..}
   | okSpikeFile fi =
     -- tsType unused because we're assuming tsType -> double.  Fix this by figuring out the
     -- MWL int to type code
-    let (Just (_,tsType,1))       = lookup "timestamp" (map (\(n,a,b) -> (n,(n,a,b))) hRecordDescr)
-        -- wfType unused b/c we're assuming it's int16.  NB - only the first 14 bits are used to fill
-        -- the recording range!
-        (Just (_,wfType,wfCount)) = lookup "waveform"  (map (\(n,a,b) -> (n,(n,a,b))) hRecordDescr)
-        nChans                    = hNTrodeChans
-        nSampsPerChan = wfCount `div` nChans
-        gains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
+    let gains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
     in do
       ts <- get
+
       wfs <- replicateM (fromIntegral nChans) $ do
         liftM (fromList . zipWith decodeVoltage gains) (replicateM (fromIntegral nSampsPerChan) get)
       return $ MWLSpike ts wfs
@@ -73,3 +72,6 @@ parseSpike fi@FileInfo{..}
 dropHeader :: ByteString -> ByteString
 dropHeader = let headerEnd = "%%ENDHEADER\n" in
                     BS.drop (BS.length headerEnd) . snd . BS.breakSubstring headerEnd
+
+spikeStream :: Producer TrodeSpike 
+spikeStream = undefined
