@@ -11,6 +11,7 @@ import Data.Serialize
 import Data.SafeCopy
 import Data.Vector.Binary
 import GHC.Int
+import Pipes
 
 import Data.Ephys.Spike
 import Data.Ephys.OldMWL.FileInfo
@@ -53,8 +54,8 @@ decodeVoltage :: Double -> Int16 -> Double
 decodeVoltage gain inV =
   fromIntegral (inV `div` 2^(14 :: Int16)) * 10 / gain
 
-spikeFromMWLSpike :: FileInfo -> MWLSpike -> Spike
-spikeFromMWLSpike FileInfe{..} MWLSpike{..} =
+spikeFromMWLSpike :: FileInfo -> MWLSpike -> TrodeSpike
+spikeFromMWLSpike FileInfo{..} MWLSpike{..} = undefined
 
 parseSpike :: FileInfo -> Get MWLSpike
 parseSpike fi@FileInfo{..}
@@ -64,14 +65,13 @@ parseSpike fi@FileInfo{..}
     let gains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
     in do
       ts <- get
-
-      wfs <- replicateM (fromIntegral nChans) $ do
-        liftM (fromList . zipWith decodeVoltage gains) (replicateM (fromIntegral nSampsPerChan) get)
+      wfs <- replicateM (fromIntegral hNTrodes) $ do
+        liftM (fromList . zipWith decodeVoltage gains) (replicateM (fromIntegral hNTrodeChans) get)
       return $ MWLSpike ts wfs
 
 dropHeader :: ByteString -> ByteString
 dropHeader = let headerEnd = "%%ENDHEADER\n" in
                     BS.drop (BS.length headerEnd) . snd . BS.breakSubstring headerEnd
 
-spikeStream :: Producer TrodeSpike 
+spikeStream :: Producer TrodeSpike IO ()
 spikeStream = undefined
