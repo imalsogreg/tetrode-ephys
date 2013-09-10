@@ -24,7 +24,7 @@ import Control.Applicative ((<$>),(<*>))
 import Data.Traversable (traverse)
 import Data.Maybe (fromJust)
 import Text.ParserCombinators.Parsec
---import System.IO.Unsafe
+import System.IO (readFile)
 import Data.List (isInfixOf,isSuffixOf)
 import Data.Map as Map
 
@@ -93,7 +93,7 @@ parseField = do
 
 getFileInfo :: FileName -> IO FileInfo
 getFileInfo fn = do
-  c   <- readFile fn
+  c   <- readFile fn :: IO String
   let pMap = paramStringsMap $ parse pFileHeader "MWL File Header" c
       grab k = case Map.lookup k pMap of
         Just v  -> Right v
@@ -132,12 +132,12 @@ grabChannelDescr m n = let grab k = case Map.lookup k m of
                              Nothing -> Left $ "ChannelDescr error grabbing field " ++ k
                        in
   do
-  ampGain  <- grab (unwords ["channel", show n, "ampgain"])
-  adGain   <- grab (unwords ["channel", show n, "adgain"])
+  ampGain'  <- grab (unwords ["channel", show n, "ampgain"])
+  adGain'   <- grab (unwords ["channel", show n, "adgain"])
   filtCode <- grab (unwords ["channel", show n, "filter"])
   thresh   <- grab (unwords ["channel", show n, "threshold"])
   col      <- grab (unwords ["channel", show n, "color"])
-  return $ ChanDescr (read ampGain) (read adGain) (read filtCode) (read thresh) (read col)
+  return $ ChanDescr (read ampGain') (read adGain') (read filtCode) (read thresh) (read col)
 
 type DatumRepeatCount = Integer
 data DatumType = DInvalid
