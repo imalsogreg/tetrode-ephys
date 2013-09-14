@@ -74,4 +74,5 @@ dropHeader = let headerEnd = "%%ENDHEADER\n" in
                     BS.drop (BS.length headerEnd) . snd . BS.breakSubstring headerEnd
 
 spikeStream :: Producer TrodeSpike IO ()
-spikeStream = undefined
+spikeStream = do
+  eof <- lift isEmpty
