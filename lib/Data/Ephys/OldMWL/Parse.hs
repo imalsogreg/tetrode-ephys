@@ -7,11 +7,13 @@ import Data.ByteString hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import Data.Vector hiding (map, forM_, any, replicateM, zipWith)
 import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith)
-import Data.Serialize
+--import Data.Serialize
 import Data.SafeCopy
 import Data.Vector.Binary
 import GHC.Int
 import Pipes
+import Data.Binary 
+import Pipes.Binary hiding (Get)
 
 import Data.Ephys.Spike
 import Data.Ephys.OldMWL.FileInfo

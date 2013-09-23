@@ -37,6 +37,7 @@ Library
     , vector-binary-instances
     , pipes (>= 4.0 && <= 5.0)
     , binary (>= 0.5 && <= 0.8)
+    , pipes-binary (>= 0.2 && <= 0.3)
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
