@@ -2,7 +2,7 @@
 
 module Data.Ephys.OldMWL.Parse where
 
-import Control.Monad (liftM, forM_, replicateM)
+import Control.Monad (liftM, forM_, replicateM, forever)
 import Data.ByteString hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import Data.Vector hiding (map, forM_, any, replicateM, zipWith)
@@ -14,6 +14,7 @@ import GHC.Int
 import Pipes
 import Data.Binary 
 import Pipes.Binary hiding (Get)
+import Pipes.ByteString (fromLazy)
 
 import Data.Ephys.Spike
 import Data.Ephys.OldMWL.FileInfo
@@ -75,6 +76,14 @@ dropHeader :: ByteString -> ByteString
 dropHeader = let headerEnd = "%%ENDHEADER\n" in
                     BS.drop (BS.length headerEnd) . snd . BS.breakSubstring headerEnd
 
-spikeStream :: Producer TrodeSpike IO ()
-spikeStream = do
-  eof <- lift isEmpty
+--spikeStream :: ByteString -> Producer TrodeSpike IO (Either )
+spikeStream b = decodeMany (fromLazy b) >-> PP.map mwlToArteSpike >-> catSpike
+
+catSpike :: (Monad m) => Pipe TrodeSpike TrodeSpike m r
+catSpike = forever $ do
+  s <- await
+  yield s
+
+mwlToArteSpike :: FileInfo -> MWLSpike -> Either String TrodeSpike
+mwlToArteSpike fi s = TrodeSpike tName tOpts tTime tWaveforms
+  where tName = 
