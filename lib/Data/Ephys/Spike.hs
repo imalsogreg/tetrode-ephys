@@ -16,28 +16,28 @@ import Data.Serialize
 --import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Serialize as VS
+import Data.Hashable
 import Data.Ephys.EphysDefs 
 
 type Waveform = U.Vector Voltage  -- This should be the waveform from Data.Ephys.Waveform probably?
 
 -- |Representation of an action potential recorded on a tetrode
 data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Text
-                             , spikeTrodeOptsHash  :: !Text   -- hash hashes values to Text?
+                             , spikeTrodeOptsHash  :: Int
                              , spikeTime           :: ExperimentTime
                              , spikeWaveforms      :: [Waveform]
                              }
                   deriving (Show)
-                  --deriving (Show, Typeable, Data, Generics.Deriving.Generic)
 
 instance Serialize TrodeSpike where
   put TrodeSpike{..} = do
     put (encodeUtf32LE spikeTrodeName)
-    put (encodeUtf32LE spikeTrodeOptsHash)
+    put spikeTrodeOptsHash
     put spikeTime
     mapM_ VS.genericPutVector spikeWaveforms
   get = do
     name <- decodeUtf32LE `liftM` get
-    opts <- decodeUtf32LE `liftM` get
+    opts <- get
     time <- get
     waveforms <- get
     return $ TrodeSpike name opts time waveforms
@@ -70,7 +70,7 @@ data TrodeAcquisitionOpts = TrodeAcquisitionOpts { spikeFilterSpec :: FilterSpec
 mySpike :: IO TrodeSpike
 mySpike = return $ TrodeSpike tName tOpts sTime sWF
   where tName = pack "TestSpikeTrode"
-        tOpts = pack "noOpts"
+        tOpts = 1001
         sTime = 10.10
         sWF = Prelude.take 4 . repeat $ (U.fromList $ [0.0 .. (31.0 :: Voltage)] :: Waveform)
 
