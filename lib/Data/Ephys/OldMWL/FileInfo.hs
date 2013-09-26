@@ -77,7 +77,7 @@ type FileName = String
 
 parseFields :: CharParser () [RecordDescr]
 parseFields = do
-  fields <- parseField `sepBy` char '\t'
+  fields <- parseField `sepBy` (char '\t')
   return fields
 
 parseField :: CharParser () RecordDescr
@@ -89,6 +89,7 @@ parseField = do
   _  <- many digit  -- We ignore the size field from the file b/c it's fixed by the type
   char ','
   datumCount <- many digit
+  many (char '\t') -- sometimes last field description also ends in \t. Eat these.
   return (fieldName, datumTypeFromIntegral (read datumCode), read datumCount)
 
 getFileInfo :: FileName -> IO FileInfo
@@ -99,7 +100,7 @@ getFileInfo fn = do
         Just v  -> Right v
         Nothing -> Left $ "Error getting field " ++ show k
       nChans = fromIntegral . length $ Prelude.filter ("threshold" `isSuffixOf`) (Map.keys pMap)
-      progNArg = read $ either (const "0") (id) $ grab "Argc" :: Integer
+      progNArg = read $ either (const "0") (id) $ grab "Argc" :: Integer  
       mFileInfo = FileInfo
                   <$> grab "Program"
                   <*> grab "Program Version"
@@ -121,7 +122,6 @@ getFileInfo fn = do
                   <*> read `liftM` grab "nelect_chan"
                   <*> readRecordMode `liftM` grab "mode"
                   <*> traverse (grabChannelDescr pMap) [0 .. nChans - 1] :: Either String FileInfo
-
   case mFileInfo of
     Left e -> error $ "Error getting FileInfo: " ++ e
     Right fi -> return fi

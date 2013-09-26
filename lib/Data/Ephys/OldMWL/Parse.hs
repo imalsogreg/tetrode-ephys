@@ -8,7 +8,7 @@ import qualified Data.ByteString as BS
 import qualified Data.Vector.Unboxed as U hiding (map, forM_, any, replicateM, zipWith)
 import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith)
 --import Data.Serialize
-import Data.SafeCopy
+--import Data.SafeCopy
 import Data.Vector.Binary
 import GHC.Int
 import Pipes
@@ -65,7 +65,7 @@ spikeFromMWLSpike FileInfo{..} MWLSpike{..} = undefined
 
 parseSpike :: FileInfo -> Get MWLSpike
 parseSpike fi@FileInfo{..}
-  | okSpikeFile fi =
+  | True = --FIXME
     -- tsType unused because we're assuming tsType -> double.  Fix this by figuring out the
     -- MWL int to type code
     let gains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
