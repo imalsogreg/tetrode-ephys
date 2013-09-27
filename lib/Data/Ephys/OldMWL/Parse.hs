@@ -65,7 +65,7 @@ spikeFromMWLSpike FileInfo{..} MWLSpike{..} = undefined
 
 parseSpike :: FileInfo -> Get MWLSpike
 parseSpike fi@FileInfo{..}
-  | True = --FIXME
+  | okSpikeFile fi = --FIXME
     -- tsType unused because we're assuming tsType -> double.  Fix this by figuring out the
     -- MWL int to type code
     let gains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
@@ -74,6 +74,7 @@ parseSpike fi@FileInfo{..}
       wfs <- replicateM (fromIntegral hNTrodes) $ do
         liftM (U.fromList . zipWith decodeVoltage gains) (replicateM (fromIntegral hNTrodeChans) get)
       return $ MWLSpike ts wfs
+  | otherwise    = error "Failed okFileInfo test"
 
 dropHeader :: BSL.ByteString -> BSL.ByteString
 dropHeader b = let headerEnd = "%%ENDHEADER\n"
@@ -81,10 +82,12 @@ dropHeader b = let headerEnd = "%%ENDHEADER\n"
              in BSL.fromChunks [rStrict]
 
 produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO r
-produceMWLSpikes fi b = do
-  let (v,b',n) = runGetState (parseSpike fi) b 0
-  yield v
-  produceMWLSpikes fi b'
+produceMWLSpikes fi b = aux (dropHeader b)
+  where
+    aux headerlessB = do
+      let (v,b',n) = runGetState (parseSpike fi) headerlessB 0
+      yield v
+      aux b'
 
 --spikeStream :: ByteString -> Producer TrodeSpike IO (Either )
 --namedSpikeStream name fi b = decodeMany (fromLazy b) >-> PP.map snd >-> PP.map (mwlToArteSpike fi name) >-> catSpike
@@ -102,3 +105,9 @@ mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
   where tTime      = spikeTime s
         tWaveforms = spikeWaveforms s
         tOpts = 1001 -- TODO: Get trodeopts
+
+myTest :: IO ()
+myTest = do
+  f <- BSL.readFile "/home/greghale/Desktop/test.tt"
+  fi <- getFileInfo "/home/greghale/Desktop/test.tt"
+  runEffect $ produceMWLSpikes fi f >-> PP.take 1 >-> PP.print
