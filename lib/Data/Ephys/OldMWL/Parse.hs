@@ -2,7 +2,7 @@
 
 module Data.Ephys.OldMWL.Parse where
 
-import Control.Monad (liftM, forM_, replicateM, forever)
+import Control.Monad (liftM, forM_, replicateM, forever,(>=>))
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Unboxed as U hiding (map, forM_, any, replicateM, zipWith)
@@ -120,10 +120,6 @@ myTest :: IO ()
 myTest = do
   f <- BSL.readFile "/home/greghale/Desktop/test.tt"
   fi <- getFileInfo "/home/greghale/Desktop/test.tt"
-  let r =  (produceMWLSpikes' fi f) >-> (PP.take 1) >-> (PP.print)
-{-
-case r of
-    Left _ -> print "error"
-    Right _ -> print "Ok"
--}
+  runEffect $ (produceMWLSpikes' fi f >>= \_ -> return ()) >-> PP.take 1 >-> PP.print
+  
   print "Ok"
