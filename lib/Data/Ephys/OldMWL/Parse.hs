@@ -18,6 +18,7 @@ import Pipes.Binary hiding (Get)
 import Data.Binary.Get (runGet, runGetState)
 import Pipes.ByteString (fromLazy)
 import qualified Data.Text as T
+import Control.Monad.Trans.Either (runEitherT)
 
 import qualified Data.Ephys.Spike as Arte
 import Data.Ephys.OldMWL.FileInfo
@@ -86,8 +87,17 @@ produceMWLSpikes fi b = aux (dropHeader b)
   where
     aux headerlessB = do
       let (v,b',n) = runGetState (parseSpike fi) headerlessB 0
+      lift $ putStrLn "Test"
       yield v
+      lift $ putStrLn "Test2"
       aux b'
+
+
+produceMWLSpikes' :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (DecodingError, Producer BS.ByteString IO ()) ())
+produceMWLSpikes' fi b = let myGet = parseSpike fi in
+  decodeGetMany myGet (fromLazy . dropHeader $ b) >-> PP.map snd
+
+-- 
 
 --spikeStream :: ByteString -> Producer TrodeSpike IO (Either )
 --namedSpikeStream name fi b = decodeMany (fromLazy b) >-> PP.map snd >-> PP.map (mwlToArteSpike fi name) >-> catSpike
@@ -110,4 +120,10 @@ myTest :: IO ()
 myTest = do
   f <- BSL.readFile "/home/greghale/Desktop/test.tt"
   fi <- getFileInfo "/home/greghale/Desktop/test.tt"
-  runEffect $ produceMWLSpikes fi f >-> PP.take 1 >-> PP.print
+  let r =  (produceMWLSpikes' fi f) >-> (PP.take 1) >-> (PP.print)
+{-
+case r of
+    Left _ -> print "error"
+    Right _ -> print "Ok"
+-}
+  print "Ok"

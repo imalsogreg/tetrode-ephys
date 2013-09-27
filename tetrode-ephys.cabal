@@ -40,6 +40,7 @@ Library
     , pipes-binary
     , pipes-bytestring (> 1.0.0)
     , unordered-containers
+    , either
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
