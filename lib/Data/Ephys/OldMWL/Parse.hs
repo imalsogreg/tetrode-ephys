@@ -6,7 +6,7 @@ import Control.Monad (liftM, forM_, replicateM, forever,(>=>))
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Unboxed as U hiding (map, forM_, any, replicateM, zipWith)
-import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith)
+import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith, length, head)
 --import Data.Serialize
 --import Data.SafeCopy
 import Data.Vector.Binary
@@ -77,13 +77,17 @@ parseSpike fi@FileInfo{..}
       return $ MWLSpike ts wfs
   | otherwise    = error "Failed okFileInfo test"
 
-dropHeader :: BSL.ByteString -> BSL.ByteString
-dropHeader b = let headerEnd = "%%ENDHEADER\n"
-                   rStrict = BS.drop (BS.length headerEnd) . snd . BS.breakSubstring headerEnd . BS.concat . BSL.toChunks $ b
-             in BSL.fromChunks [rStrict]
+dropHeaderInFirstChunk :: BSL.ByteString -> Maybe BSL.ByteString
+dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
+                               firstChunk = head . BSL.toChunks b
+                               (h,t) = BS.breakSubstring headerEnd firstChunk
+                           in
+                            if t == BS.null
+                            then Nothing
+                            else BSL.drop (length h + length headerEnd) b
 
 produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO r
-produceMWLSpikes fi b = aux (dropHeader b)
+produceMWLSpikes fi b = aux (dropHeaderInFirstChunk b)
   where
     aux headerlessB = do
       let (v,b',n) = runGetState (parseSpike fi) headerlessB 0
@@ -95,7 +99,7 @@ produceMWLSpikes fi b = aux (dropHeader b)
 
 produceMWLSpikes' :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (DecodingError, Producer BS.ByteString IO ()) ())
 produceMWLSpikes' fi b = let myGet = parseSpike fi in
-  decodeGetMany myGet (fromLazy . dropHeader $ b) >-> PP.map snd
+  decodeGetMany myGet (fromLazy . dropHeaderInFirstChunk $ b) >-> PP.map snd
 
 -- 
 
