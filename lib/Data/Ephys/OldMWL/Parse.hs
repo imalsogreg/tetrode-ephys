@@ -77,14 +77,14 @@ parseSpike fi@FileInfo{..}
       return $ MWLSpike ts wfs
   | otherwise    = error "Failed okFileInfo test"
 
-dropHeaderInFirstChunk :: BSL.ByteString -> Maybe BSL.ByteString
+dropHeaderInFirstChunk :: BSL.ByteString -> BSL.ByteString
 dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
-                               firstChunk = head . BSL.toChunks b
+                               firstChunk = head . BSL.toChunks $ b
                                (h,t) = BS.breakSubstring headerEnd firstChunk
                            in
-                            if t == BS.null
-                            then Nothing
-                            else BSL.drop (length h + length headerEnd) b
+                            if BS.null t
+                            then b
+                            else BSL.drop (fromIntegral (BS.length h + BS.length headerEnd)) b
 
 produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO r
 produceMWLSpikes fi b = aux (dropHeaderInFirstChunk b)
