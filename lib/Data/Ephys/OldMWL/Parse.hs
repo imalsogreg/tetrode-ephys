@@ -3,22 +3,25 @@
 module Data.Ephys.OldMWL.Parse where
 
 import Control.Monad (liftM, forM_, replicateM, forever,(>=>))
+import Data.Maybe (listToMaybe)
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Unboxed as U hiding (map, forM_, any, replicateM, zipWith)
-import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith, length, head)
+import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith, length, head, take, drop, filter,reverse)
 --import Data.Serialize
 --import Data.SafeCopy
 import Data.Vector.Binary
 import GHC.Int
+import Foreign.C.Types
 import Pipes
 import qualified Pipes.Prelude as PP
 import Data.Binary 
-import Pipes.Binary hiding (Get)
+import qualified Pipes.Binary as PBinary hiding (Get)
 import Data.Binary.Get (runGet, runGetState)
-import Pipes.ByteString (fromLazy)
+import qualified Pipes.ByteString as PBS 
 import qualified Data.Text as T
 import Control.Monad.Trans.Either (runEitherT)
+import System.Endian (fromBE32)
 
 import qualified Data.Ephys.Spike as Arte
 import Data.Ephys.OldMWL.FileInfo
@@ -64,18 +67,46 @@ decodeVoltage gain inV =
 spikeFromMWLSpike :: FileInfo -> MWLSpike -> Arte.TrodeSpike
 spikeFromMWLSpike FileInfo{..} MWLSpike{..} = undefined
 
+chunkToLength :: [a] -> Int -> [[a]]
+chunkToLength xs n = aux [] xs
+  where aux acc []  = reverse acc
+        aux acc xs' = aux (take n xs' : acc) (drop n xs')
+
 parseSpike :: FileInfo -> Get MWLSpike
 parseSpike fi@FileInfo{..}
   | okSpikeFile fi = --FIXME
     -- tsType unused because we're assuming tsType -> double.  Fix this by figuring out the
     -- MWL int to type code
-    let gains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
+    let allGains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
+        gains = if hProbe == 0 then take 4 allGains else take 4 . drop 4 $ allGains
+        Just (_,_,totalSampsPerSpike) = listToMaybe $ filter (\(n,_,_) -> n == "waveform") hRecordDescr
     in do
       ts <- get
-      wfs <- replicateM (fromIntegral hNTrodes) $ do
-        liftM (U.fromList . zipWith decodeVoltage gains) (replicateM (fromIntegral hNTrodeChans) get)
-      return $ MWLSpike ts wfs
+      vs <- replicateM (fromIntegral totalSampsPerSpike) get :: Get [Int16]
+      let wfs  = vs `chunkToLength` (fromIntegral totalSampsPerSpike `div` fromIntegral hNTrodeChans)
+          wfsD = zipWith (\g xs -> map (decodeVoltage g) xs) gains wfs
+          wfsV = map U.fromList wfsD
+      return $ MWLSpike ts wfsV
   | otherwise    = error "Failed okFileInfo test"
+
+testParse' :: IO ()
+testParse' = do
+  f <- testFile
+  fi <- testFileInfo
+  let s = runGet (parseSpike fi) f
+  print s
+
+testParse :: Get (Word32,[Int16])
+testParse = do
+  ts <- get
+  vs <- replicateM 128 get
+  return (fromBE32 ts,vs)
+
+myTest'' :: IO ()
+myTest'' = do
+  f <- testFile
+  let xs = runGet (replicateM 400 testParse) (dropHeaderInFirstChunk f)
+  Prelude.mapM_ (\(t,vs) -> print t >> print (vs `chunkToLength` 32)) xs
 
 dropHeaderInFirstChunk :: BSL.ByteString -> BSL.ByteString
 dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
@@ -97,11 +128,9 @@ produceMWLSpikes fi b = aux (dropHeaderInFirstChunk b)
       aux b'
 
 
-produceMWLSpikes' :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (DecodingError, Producer BS.ByteString IO ()) ())
+produceMWLSpikes' :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceMWLSpikes' fi b = let myGet = parseSpike fi in
-  decodeGetMany myGet (fromLazy . dropHeaderInFirstChunk $ b) >-> PP.map snd
-
--- 
+  PBinary.decodeGetMany myGet (PBS.fromLazy . dropHeaderInFirstChunk $ b) >-> PP.map snd
 
 --spikeStream :: ByteString -> Producer TrodeSpike IO (Either )
 --namedSpikeStream name fi b = decodeMany (fromLazy b) >-> PP.map snd >-> PP.map (mwlToArteSpike fi name) >-> catSpike
@@ -114,6 +143,12 @@ catSpike = forever $ do
   s <- await
   yield s
 
+catSpike' :: Pipe MWLSpike MWLSpike IO r
+catSpike' = forever $ do
+  s <- await
+  lift $ putStrLn "catSpike'"
+  yield s
+
 mwlToArteSpike :: FileInfo -> T.Text -> MWLSpike -> Arte.TrodeSpike
 mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
   where tTime      = spikeTime s
@@ -124,6 +159,22 @@ myTest :: IO ()
 myTest = do
   f <- BSL.readFile "/home/greghale/Desktop/test.tt"
   fi <- getFileInfo "/home/greghale/Desktop/test.tt"
-  runEffect $ (produceMWLSpikes' fi f >>= \_ -> return ()) >-> PP.take 1 >-> PP.print
+  runEffect $ produceMWLSpikes' fi f  >-> catSpike' >->  PP.print
   
+  print "Ok"
+
+dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
+dropResult p = p >>= \_ -> return ()
+
+testFile :: IO BSL.ByteString
+testFile = BSL.readFile "/home/greghale/Desktop/test.tt"
+
+testFileInfo :: IO FileInfo
+testFileInfo = getFileInfo "/home/greghale/Desktop/test.tt"
+
+myTest' :: IO ()
+myTest' = do
+  f <- BSL.readFile "/home/greghale/Desktop/test.tt"
+  fi <- getFileInfo "/home/greghale/Desktop/test.tt"
+--  runEffect $ toUnit (
   print "Ok"

@@ -41,6 +41,7 @@ Library
     , pipes-bytestring (> 1.0.0)
     , unordered-containers
     , either
+    , cpu
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
