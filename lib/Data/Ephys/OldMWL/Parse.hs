@@ -57,12 +57,13 @@ writeSpike (MWLSpike tSpike waveforms) = do put tSpike
                                             forM_ waveforms $ \waveform ->
                                               forM_ (U.toList waveform) put
 
-decodeTime :: Int32 -> Double
-decodeTime = fromIntegral . (`div` 10000)
+decodeTime :: Word32 -> Double
+decodeTime = (/ 10000) . fromIntegral . fromBE32
 
+-- Assuming the Int16 is signed
 decodeVoltage :: Double -> Int16 -> Double
 decodeVoltage gain inV =
-  fromIntegral (inV `div` 2^(14 :: Int16)) * 10 / gain
+  fromIntegral inV / (2 ** 14) * 20 / gain
 
 spikeFromMWLSpike :: FileInfo -> MWLSpike -> Arte.TrodeSpike
 spikeFromMWLSpike FileInfo{..} MWLSpike{..} = undefined
@@ -81,14 +82,15 @@ parseSpike fi@FileInfo{..}
         gains = if hProbe == 0 then take 4 allGains else take 4 . drop 4 $ allGains
         Just (_,_,totalSampsPerSpike) = listToMaybe $ filter (\(n,_,_) -> n == "waveform") hRecordDescr
     in do
-      ts <- get
+      ts <- get  :: Get Word32
       vs <- replicateM (fromIntegral totalSampsPerSpike) get :: Get [Int16]
       let wfs  = vs `chunkToLength` (fromIntegral totalSampsPerSpike `div` fromIntegral hNTrodeChans)
           wfsD = zipWith (\g xs -> map (decodeVoltage g) xs) gains wfs
           wfsV = map U.fromList wfsD
-      return $ MWLSpike ts wfsV
+      return $ MWLSpike (decodeTime ts) wfsV
   | otherwise    = error "Failed okFileInfo test"
 
+{-
 testParse' :: IO ()
 testParse' = do
   f <- testFile
@@ -107,6 +109,7 @@ myTest'' = do
   f <- testFile
   let xs = runGet (replicateM 400 testParse) (dropHeaderInFirstChunk f)
   Prelude.mapM_ (\(t,vs) -> print t >> print (vs `chunkToLength` 32)) xs
+-}
 
 dropHeaderInFirstChunk :: BSL.ByteString -> BSL.ByteString
 dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
@@ -159,8 +162,9 @@ myTest :: IO ()
 myTest = do
   f <- BSL.readFile "/home/greghale/Desktop/test.tt"
   fi <- getFileInfo "/home/greghale/Desktop/test.tt"
-  runEffect $ produceMWLSpikes' fi f  >-> catSpike' >->  PP.print
-  
+  --runEffect $ produceMWLSpikes' fi f  >-> catSpike' >->  PP.print
+  n <- ( PP.length $ dropResult (produceMWLSpikes' fi f))
+  print n
   print "Ok"
 
 dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
@@ -171,10 +175,3 @@ testFile = BSL.readFile "/home/greghale/Desktop/test.tt"
 
 testFileInfo :: IO FileInfo
 testFileInfo = getFileInfo "/home/greghale/Desktop/test.tt"
-
-myTest' :: IO ()
-myTest' = do
-  f <- BSL.readFile "/home/greghale/Desktop/test.tt"
-  fi <- getFileInfo "/home/greghale/Desktop/test.tt"
---  runEffect $ toUnit (
-  print "Ok"
