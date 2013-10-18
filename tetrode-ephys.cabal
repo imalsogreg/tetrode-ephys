@@ -26,21 +26,18 @@ Library
     base   (>= 4 && <= 5)
     , containers
     , cereal
-    , cereal-vector
     , vector
+    , vector-binary-instances
     , text
     , time
     , bytestring
-    , safecopy 
     , parsec
     , hashable
-    , vector-binary-instances
     , pipes (>= 4.0 && <= 5.0)
     , binary
     , pipes-binary
     , pipes-bytestring (> 1.0.0)
     , unordered-containers
-    , either
     , cpu
   Exposed-Modules:
     Data.Ephys

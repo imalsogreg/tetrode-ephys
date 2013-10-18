@@ -12,10 +12,8 @@ import Control.Applicative
 import Data.Traversable (traverse)
 import qualified Data.ByteString.Char8 as B
 import Data.Serialize
---import Data.SafeCopy
---import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
-import qualified Data.Vector.Serialize as VS
+import qualified Data.Vector.Cereal as VS
 import Data.Hashable
 import Data.Ephys.EphysDefs 
 
@@ -34,7 +32,7 @@ instance Serialize TrodeSpike where
     put (encodeUtf32LE spikeTrodeName)
     put spikeTrodeOptsHash
     put spikeTime
-    mapM_ VS.genericPutVector spikeWaveforms
+    mapM_ put (Prelude.map encode spikeWaveforms)
   get = do
     name <- decodeUtf32LE `liftM` get
     opts <- get
