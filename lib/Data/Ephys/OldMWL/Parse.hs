@@ -17,11 +17,14 @@ import Pipes
 import qualified Pipes.Prelude as PP
 import Data.Binary 
 import qualified Pipes.Binary as PBinary hiding (Get)
-import Data.Binary.Get (runGet, runGetState)
+import Data.Binary.Get (runGet, runGetState, getWord32be, getWord32le, getWord16be, getWord16le)
 import qualified Pipes.ByteString as PBS 
 import qualified Data.Text as T
 import Control.Monad.Trans.Either (runEitherT)
 import System.Endian (fromBE32)
+import Data.Bits (shiftL, shiftR, (.|.))
+import Data.Packed.Matrix
+import Data.Packed.Vector (Vector(..), toList)
 
 import qualified Data.Ephys.Spike as Arte
 import Data.Ephys.OldMWL.FileInfo
@@ -58,12 +61,20 @@ writeSpike (MWLSpike tSpike waveforms) = do put tSpike
                                               forM_ (U.toList waveform) put
 
 decodeTime :: Word32 -> Double
-decodeTime = (/ 10000) . fromIntegral . fromBE32
+decodeTime = (/ 10000) . fromIntegral
+
+fromBE16 :: Word16 -> Word16
+fromBE16 x = (x `shiftL` 8) .|. (x `shiftR` 8)
+
+word16ToInt16 :: Word16 -> Int16
+word16ToInt16 x = fromIntegral x - ( (fromIntegral (maxBound :: Word16)) `div` 2)
 
 -- Assuming the Int16 is signed
-decodeVoltage :: Double -> Int16 -> Double
+decodeVoltage :: Double -> Word16 -> Double
 decodeVoltage gain inV =
-  fromIntegral inV / (2 ** 14) * 20 / gain
+--  fromIntegral ((fromIntegral . fromBE16 $ inV) / (2 ** 14) - 10.0) * 10 / gain - 10.0
+--  10.0 * ( fromIntegral inV ) / (2 ^ (14 :: Int) - 1) / gain
+  fromIntegral . word16ToInt16 $ inV
 
 spikeFromMWLSpike :: FileInfo -> MWLSpike -> Arte.TrodeSpike
 spikeFromMWLSpike FileInfo{..} MWLSpike{..} = undefined
@@ -72,6 +83,16 @@ chunkToLength :: [a] -> Int -> [[a]]
 chunkToLength xs n = aux [] xs
   where aux acc []  = reverse acc
         aux acc xs' = aux (take n xs' : acc) (drop n xs')
+
+{-
+getInt16be :: Get Int16
+getInt16be = do
+  bigByte    <- get
+  littleByte <- get
+  -}
+
+hMatrixVecToUnboxedVec :: Data.Packed.Vector.Vector Double -> U.Vector Double
+hMatrixVecToUnboxedVec = U.fromList . toList
 
 parseSpike :: FileInfo -> Get MWLSpike
 parseSpike fi@FileInfo{..}
@@ -82,34 +103,17 @@ parseSpike fi@FileInfo{..}
         gains = if hProbe == 0 then take 4 allGains else take 4 . drop 4 $ allGains
         Just (_,_,totalSampsPerSpike) = listToMaybe $ filter (\(n,_,_) -> n == "waveform") hRecordDescr
     in do
-      ts <- get  :: Get Word32
-      vs <- replicateM (fromIntegral totalSampsPerSpike) get :: Get [Int16]
-      let wfs  = vs `chunkToLength` (fromIntegral totalSampsPerSpike `div` fromIntegral hNTrodeChans)
+      ts <- getWord32le :: Get Word32
+      vs <- replicateM (fromIntegral totalSampsPerSpike) getWord16le
+      let vsInt = map (fromIntegral . word16ToInt16) vs
+          vsMat  = ( fromIntegral (totalSampsPerSpike `div` hNTrodeChans) >< fromIntegral hNTrodeChans ) vsInt
+          vsVecs = toColumns vsMat :: [Vector Double]
+          vsUVecs = map hMatrixVecToUnboxedVec vsVecs
+{-      let wfs  = vs `chunkToLength` (fromIntegral totalSampsPerSpike `div` fromIntegral hNTrodeChans)
           wfsD = zipWith (\g xs -> map (decodeVoltage g) xs) gains wfs
-          wfsV = map U.fromList wfsD
-      return $ MWLSpike (decodeTime ts) wfsV
+          wfsV = map U.fromList wfsD -}
+      return $ MWLSpike (decodeTime ts) vsUVecs
   | otherwise    = error "Failed okFileInfo test"
-
-{-
-testParse' :: IO ()
-testParse' = do
-  f <- testFile
-  fi <- testFileInfo
-  let s = runGet (parseSpike fi) f
-  print s
-
-testParse :: Get (Word32,[Int16])
-testParse = do
-  ts <- get
-  vs <- replicateM 128 get
-  return (fromBE32 ts,vs)
-
-myTest'' :: IO ()
-myTest'' = do
-  f <- testFile
-  let xs = runGet (replicateM 400 testParse) (dropHeaderInFirstChunk f)
-  Prelude.mapM_ (\(t,vs) -> print t >> print (vs `chunkToLength` 32)) xs
--}
 
 dropHeaderInFirstChunk :: BSL.ByteString -> BSL.ByteString
 dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
@@ -135,11 +139,8 @@ produceMWLSpikes' :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either 
 produceMWLSpikes' fi b = let myGet = parseSpike fi in
   PBinary.decodeGetMany myGet (PBS.fromLazy . dropHeaderInFirstChunk $ b) >-> PP.map snd
 
---spikeStream :: ByteString -> Producer TrodeSpike IO (Either )
---namedSpikeStream name fi b = decodeMany (fromLazy b) >-> PP.map snd >-> PP.map (mwlToArteSpike fi name) >-> catSpike
--- this doesn't work b/c MWLSpike can't be an instance of Binary,
--- can't be an instance of binary b/c we need FileInfo to parse,
--- there's no way to define get for an MWLSpike
+produceTrodeSpikes :: T.Text -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
+produceTrodeSpikes tName fi b = produceMWLSpikes fi b >-> PP.map (mwlToArteSpike fi tName)
 
 catSpike :: (Monad m) => Pipe Arte.TrodeSpike Arte.TrodeSpike m r
 catSpike = forever $ do
@@ -162,9 +163,9 @@ myTest :: IO ()
 myTest = do
   f <- BSL.readFile "/home/greghale/Desktop/test.tt"
   fi <- getFileInfo "/home/greghale/Desktop/test.tt"
-  --runEffect $ produceMWLSpikes' fi f  >-> catSpike' >->  PP.print
-  n <- ( PP.length $ dropResult (produceMWLSpikes' fi f))
-  print n
+  runEffect $ dropResult (produceMWLSpikes' fi f)  >-> catSpike' >-> PP.take 50 >->  PP.print
+  --n <- ( PP.length $ dropResult (produceMWLSpikes' fi (dropHeaderInFirstChunk f)))
+  --print n
   print "Ok"
 
 dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()

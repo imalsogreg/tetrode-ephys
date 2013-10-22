@@ -42,6 +42,7 @@ Library
     , unordered-containers
     , either
     , cpu
+    , hmatrix
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
