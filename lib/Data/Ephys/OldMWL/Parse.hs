@@ -7,10 +7,10 @@ import Data.Maybe (listToMaybe)
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Unboxed as U hiding (map, forM_, any, replicateM, zipWith)
-import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith, length, head, take, drop, filter,reverse)
+--import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith, length, head, take, drop, filter,reverse)
 --import Data.Serialize
 --import Data.SafeCopy
-import Data.Vector.Binary
+--import Data.Vector.Binary
 import GHC.Int
 import Foreign.C.Types
 import Pipes
@@ -20,7 +20,7 @@ import qualified Pipes.Binary as PBinary hiding (Get)
 import Data.Binary.Get (runGet, runGetState, getWord32be, getWord32le, getWord16be, getWord16le)
 import qualified Pipes.ByteString as PBS 
 import qualified Data.Text as T
-import Control.Monad.Trans.Either (runEitherT)
+--import Control.Monad.Trans.Either (runEitherT)
 import System.Endian (fromBE32)
 import Data.Bits (shiftL, shiftR, (.|.))
 import Data.Packed.Matrix
