@@ -34,7 +34,8 @@ instance S.Serialize TrodeSpike where
     S.put (encodeUtf32LE spikeTrodeName)
     S.put spikeTrodeOptsHash
     S.put spikeTime
-    mapM_ S.put (Prelude.map S.encode spikeWaveforms)
+    S.put spikeWaveforms
+--    mapM_ S.put (Prelude.map S.encode spikeWaveforms)
   get = do
     name <- decodeUtf32LE `liftM` S.get
     opts <- S.get
@@ -78,7 +79,7 @@ data TrodeAcquisitionOpts = TrodeAcquisitionOpts { spikeFilterSpec :: FilterSpec
                                                  , spikeThresholds :: [Voltage]
                                                  } deriving (Eq, Show)
 
-{-
+
 mySpike :: IO TrodeSpike
 mySpike = return $ TrodeSpike tName tOpts sTime sWF
   where tName = pack "TestSpikeTrode"
@@ -86,6 +87,7 @@ mySpike = return $ TrodeSpike tName tOpts sTime sWF
         sTime = 10.10
         sWF = Prelude.take 4 . repeat $ (U.fromList $ [0.0 .. (31.0 :: Voltage)] :: Waveform)
 
+{-
 myTest :: IO ()
 myTest = do
   s <- mySpike
