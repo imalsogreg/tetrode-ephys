@@ -75,7 +75,7 @@ type FileName = String
 
 parseFields :: CharParser () [RecordDescr]
 parseFields = do
-  fields <- parseField `endBy` (char '\t')
+  fields <- many parseField
   return fields
 
 parseField :: CharParser () RecordDescr
@@ -87,6 +87,7 @@ parseField = do
   _  <- many digit  -- We ignore the size field from the file b/c it's fixed by the type
   char ','
   datumCount <- many digit
+  many (char '\t')
   return (fieldName, datumTypeFromIntegral (read datumCode), read datumCount)
 
 getFileInfo :: FileName -> IO FileInfo
