@@ -141,6 +141,7 @@ mwlToArteSpike _ tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
         tWaveforms = mwlSpikeWaveforms s
         tOpts = 1001 -- TODO: Get trodeopts
 
+{-
 myTest :: IO ()
 myTest = do
   f <- BSL.readFile "/home/greghale/Desktop/test.tt"
@@ -158,3 +159,4 @@ testFile = BSL.readFile "/home/greghale/Desktop/test.tt"
 
 testFileInfo :: IO FileInfo
 testFileInfo = getFileInfo "/home/greghale/Desktop/test.tt"
+-}

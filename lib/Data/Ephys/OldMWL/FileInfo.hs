@@ -90,16 +90,19 @@ parseField = do
   many (char '\t')
   return (fieldName, datumTypeFromIntegral (read datumCode), read datumCount)
 
-getFileInfo :: FileName -> IO FileInfo
+getFileInfo :: FileName -> IO (Either String FileInfo)
 getFileInfo fn = do
   c   <- readFile fn :: IO String
-  let pMap = paramStringsMap $ parse pFileHeader "MWL File Header" c
-      grab k = case Map.lookup k pMap of
-        Just v  -> Right v
-        Nothing -> Left $ "Error getting field " ++ show k
-      nChans = fromIntegral . length $ Prelude.filter ("threshold" `isSuffixOf`) (Map.keys pMap)
-      progNArg = read $ either (const "0") (id) $ grab "Argc" :: Integer  
-      mFileInfo = FileInfo
+  case paramStringsMap $ parse pFileHeader "MWL File Header" c of
+    Left e -> return $ Left e
+    Right pMap -> do
+      let grab k = case Map.lookup k pMap of
+            Just v  -> Right v
+            Nothing -> Left $ "Error getting field " ++ show k
+          nChans = fromIntegral . length $ Prelude.filter ("threshold" `isSuffixOf`) (Map.keys pMap)
+          progNArg = read $ either (const "0") (id) $ grab "Argc" :: Integer  
+
+      return (FileInfo    
                   <$> grab "Program"
                   <*> grab "Program Version"
                   <*> traverse grab ["Argv[" ++ show n ++ "]" | n <- [1..progNArg - 1]]
@@ -111,18 +114,16 @@ getFileInfo fn = do
                   <*> read `liftM` grab "File type"
                   <*> readExtractionType `liftM` grab "Extraction type"
                   <*> read `liftM` grab "Probe"
-                  <*> either (Left . show) (Right . id)  -- There must be a better way than this.
-                  (parse parseFields "MWL Header Fields" (either (const "") id $ grab "Fields"))
-
+                  <*> either (Left . show) (Right . id)    -- There must be
+                  (parse parseFields "MWL Header Fields"   -- a better way
+                   (either (const "") id $ grab "Fields")) -- to do this..
                   <*> read `liftM` grab "rate"
                   <*> read `liftM` grab "nelectrodes"
                   <*> read `liftM` grab "nchannels"
                   <*> read `liftM` grab "nelect_chan"
                   <*> readRecordMode `liftM` grab "mode"
-                  <*> traverse (grabChannelDescr pMap) [0 .. nChans - 1] :: Either String FileInfo
-  case mFileInfo of
-    Left e -> error $ "Error getting FileInfo: " ++ e
-    Right fi -> return fi
+                  <*> traverse (grabChannelDescr pMap) [0 .. nChans - 1])
+
 
 grabChannelDescr :: Map String String -> Integer -> Either String ChanDescr
 grabChannelDescr m n = let grab k = case Map.lookup k m of
@@ -211,9 +212,10 @@ pKeyChar = noneOf ":\t\n"
 pValChar :: CharParser () Char
 pValChar = noneOf "\n"
 
-paramStringsMap :: Either ParseError [(String, Maybe String)] -> Map.Map String String
-paramStringsMap (Left e) = error $ "Header parse error for MWL file: " ++ show e
-paramStringsMap (Right as) = Prelude.foldl insJustsWithoutReplacement Map.empty as
+paramStringsMap :: Either ParseError [(String, Maybe String)] ->
+                   Either String (Map.Map String String)
+paramStringsMap (Left e) = Left $ show e
+paramStringsMap (Right as) = Right $ Prelude.foldl insJustsWithoutReplacement Map.empty as
   where
     insJustsWithoutReplacement m (_, Nothing) = m
     insJustsWithoutReplacement m (k, Just v)  =
