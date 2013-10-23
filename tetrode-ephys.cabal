@@ -40,9 +40,11 @@ Library
     , unordered-containers
     , cpu
     , hmatrix
+    , pipes-rt
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
     Data.Ephys.Spike
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
+    Data.Ephys.TimeSignal.Filter

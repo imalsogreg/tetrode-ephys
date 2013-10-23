@@ -2,8 +2,6 @@
 
 module Data.Ephys.EphysDefs where
 
--- import Data.Time 
-
 type Voltage = Double
 
 type ExperimentTime = Double -- TODO: How to record the wall clock time of "0 :: ExperimentTime"

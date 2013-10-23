@@ -2,35 +2,28 @@
 
 module Data.Ephys.OldMWL.Parse where
 
-import Control.Monad (liftM, forM_, replicateM, forever,(>=>))
+import Control.Monad (forM_, replicateM, forever)
 import Data.Maybe (listToMaybe)
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Unboxed as U hiding (map, forM_, any, replicateM, zipWith)
---import Data.Vector.Storable hiding (map, toList, any, replicateM, fromList, forM_, zipWith, length, head, take, drop, filter,reverse)
---import Data.Serialize
---import Data.SafeCopy
---import Data.Vector.Binary
 import GHC.Int
-import Foreign.C.Types
 import Pipes
 import qualified Pipes.Prelude as PP
 import Data.Binary 
 import qualified Pipes.Binary as PBinary hiding (Get)
-import Data.Binary.Get (runGet, runGetState, getWord32be, getWord32le, getWord16be, getWord16le)
+import Data.Binary.Get (getWord32le, getWord16le)
 import qualified Pipes.ByteString as PBS 
 import qualified Data.Text as T
---import Control.Monad.Trans.Either (runEitherT)
-import System.Endian (fromBE32)
 import Data.Bits (shiftL, shiftR, (.|.))
 import Data.Packed.Matrix
-import Data.Packed.Vector (Vector(..), toList)
+import Data.Packed.Vector (Vector, toList)
 
 import qualified Data.Ephys.Spike as Arte
 import Data.Ephys.OldMWL.FileInfo
 
-data MWLSpike = MWLSpike { spikeTime      :: Double
-                         , spikeWaveforms :: [U.Vector Double]
+data MWLSpike = MWLSpike { mwlSpikeTime      :: Double
+                         , mwlSpikeWaveforms :: [U.Vector Double]
                          } deriving (Eq, Show)
 
 okSpikeFile :: FileInfo -> Bool
@@ -124,19 +117,8 @@ dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
                             then b
                             else BSL.drop (fromIntegral (BS.length h + BS.length headerEnd)) b
 
-produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO r
-produceMWLSpikes fi b = aux (dropHeaderInFirstChunk b)
-  where
-    aux headerlessB = do
-      let (v,b',n) = runGetState (parseSpike fi) headerlessB 0
-      lift $ putStrLn "Test"
-      yield v
-      lift $ putStrLn "Test2"
-      aux b'
-
-
-produceMWLSpikes' :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
-produceMWLSpikes' fi b = let myGet = parseSpike fi in
+produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
+produceMWLSpikes fi b = let myGet = parseSpike fi in
   PBinary.decodeGetMany myGet (PBS.fromLazy . dropHeaderInFirstChunk $ b) >-> PP.map snd
 
 produceTrodeSpikes :: T.Text -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
@@ -154,19 +136,19 @@ catSpike' = forever $ do
   yield s
 
 mwlToArteSpike :: FileInfo -> T.Text -> MWLSpike -> Arte.TrodeSpike
-mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
-  where tTime      = spikeTime s
-        tWaveforms = spikeWaveforms s
+mwlToArteSpike _ tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
+  where tTime      = mwlSpikeTime s
+        tWaveforms = mwlSpikeWaveforms s
         tOpts = 1001 -- TODO: Get trodeopts
 
 myTest :: IO ()
 myTest = do
   f <- BSL.readFile "/home/greghale/Desktop/test.tt"
   fi <- getFileInfo "/home/greghale/Desktop/test.tt"
-  runEffect $ dropResult (produceMWLSpikes' fi f)  >-> catSpike' >-> PP.take 50 >->  PP.print
+  runEffect $ dropResult (produceMWLSpikes fi f)  >-> catSpike' >-> PP.take 50 >->  PP.print
   --n <- ( PP.length $ dropResult (produceMWLSpikes' fi (dropHeaderInFirstChunk f)))
   --print n
-  print "Ok"
+  print ("Ok" :: String)
 
 dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
 dropResult p = p >>= \_ -> return ()

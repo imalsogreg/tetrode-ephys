@@ -8,14 +8,13 @@ import Data.Text
 import Data.Text.Encoding
 import Data.Time
 import Control.Monad (liftM)
-import Control.Applicative
-import Data.Traversable (traverse)
-import qualified Data.ByteString.Char8 as B
-import Data.Serialize
+import qualified Data.Serialize as S
+import qualified Data.Binary as B
 import qualified Data.Vector.Unboxed as U
-import qualified Data.Vector.Cereal as VS
-import Data.Hashable
-import Data.Ephys.EphysDefs 
+import Data.Vector.Cereal()
+import Data.Vector.Binary()
+import Data.Ephys.EphysDefs
+import Pipes.RealTime
 
 type Waveform = U.Vector Voltage  -- This should be the waveform from Data.Ephys.Waveform probably?
 
@@ -27,19 +26,34 @@ data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Text
                              }
                   deriving (Show)
 
-instance Serialize TrodeSpike where
+instance TMinus TrodeSpike where
+  tMinusSec TrodeSpike{..} = spikeTime
+
+instance S.Serialize TrodeSpike where
   put TrodeSpike{..} = do
-    put (encodeUtf32LE spikeTrodeName)
-    put spikeTrodeOptsHash
-    put spikeTime
-    mapM_ put (Prelude.map encode spikeWaveforms)
+    S.put (encodeUtf32LE spikeTrodeName)
+    S.put spikeTrodeOptsHash
+    S.put spikeTime
+    mapM_ S.put (Prelude.map S.encode spikeWaveforms)
   get = do
-    name <- decodeUtf32LE `liftM` get
-    opts <- get
-    time <- get
-    waveforms <- get
+    name <- decodeUtf32LE `liftM` S.get
+    opts <- S.get
+    time <- S.get
+    waveforms <- S.get
     return $ TrodeSpike name opts time waveforms
 
+instance B.Binary TrodeSpike where
+  put TrodeSpike{..} = do
+    B.put (encodeUtf32LE spikeTrodeName)
+    B.put spikeTrodeOptsHash
+    B.put spikeTime
+    mapM_ B.put (Prelude.map B.encode spikeWaveforms)
+  get = do
+    name <- decodeUtf32LE `liftM` B.get
+    opts <- B.get
+    time <- B.get
+    waveforms <- B.get
+    return $ TrodeSpike name opts time waveforms
 
 
 -- |Representation of tetroe-recorded AP features
@@ -64,7 +78,7 @@ data TrodeAcquisitionOpts = TrodeAcquisitionOpts { spikeFilterSpec :: FilterSpec
                                                  , spikeThresholds :: [Voltage]
                                                  } deriving (Eq, Show)
 
-
+{-
 mySpike :: IO TrodeSpike
 mySpike = return $ TrodeSpike tName tOpts sTime sWF
   where tName = pack "TestSpikeTrode"
@@ -75,4 +89,5 @@ mySpike = return $ TrodeSpike tName tOpts sTime sWF
 myTest :: IO ()
 myTest = do
   s <- mySpike
-  print $ runPut (put s)
+  print $ S.runPut (S.put s)
+-}

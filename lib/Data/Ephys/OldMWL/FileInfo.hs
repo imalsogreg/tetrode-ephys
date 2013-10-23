@@ -22,10 +22,8 @@ module Data.Ephys.OldMWL.FileInfo where
 import Control.Monad
 import Control.Applicative ((<$>),(<*>))
 import Data.Traversable (traverse)
-import Data.Maybe (fromJust)
 import Text.ParserCombinators.Parsec
-import System.IO (readFile)
-import Data.List (isInfixOf,isSuffixOf)
+import Data.List (isSuffixOf)
 import Data.Map as Map
 
 data FileType = Binary | Ascii deriving (Eq, Show, Read)
