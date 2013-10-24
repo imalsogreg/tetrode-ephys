@@ -1,22 +1,29 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Data.Ephys.Cluster where
 
+import Data.Ephys.Spike
 import Data.Vector as V
 
-type ChanInd = Int
-type Point = (Double,Double)
-type Polygon = [Point]
+import Control.Lens
 
-data CartesianBound = CartesianBound { cartXChan :: ChanInd
-                                     , cartYChan :: ChanInd
-                                     , cartPolygon :: Polygon
-                                     }
+type ChanInd = Int
+type Polygon = [(Double,Double)]
+
+
+data CartBound = CartBound { _cartXChan :: ChanInd
+                           , _cartYChan :: ChanInd
+                           , _cartPolygon :: Polygon
+                           }
                       deriving (Eq, Show)
-                                       
-data ClusterMethod = ClustCartesianBound 
+
+$(makeLenses ''CartBound)
+                               
+data ClusterMethod = ClustCartBound 
                    | ClustPolarBound
                    | ClustSoftCartesian
-                   | ClustIntersection ClusterMethod ClusterMethod
-                   | ClustUnion ClusterMethod ClusterMethod
+                   | ClustIntersection [ClusterMethod]
+                   | ClustUnion [ClusterMethod]
                    deriving (Eq, Show)
 
 {-
@@ -32,7 +39,7 @@ int pnpoly(int nvert, float *vertx, float *verty, float testx, float testy)
   return c;
 }
 -}
-
+{-
 pointInPolygon :: Polygon -> Point -> Bool
 pointInPolygon polyPts (tx,ty) = loop 0 lastInd False where
   -- Final case
@@ -43,4 +50,5 @@ pointInPolygon polyPts (tx,ty) = loop 0 lastInd False where
     | otherwise = False
   lastInd = V.length polyPts - 1
   yTest (x0,y0) (x1,y1) =  (y1 > tY) !=
-slopeTest (x0,y0) (x1,y1) 
+slopeTest (x0,y0) (x1,y1)
+-}

@@ -35,10 +35,13 @@ readRecordMode "CONTINUOUS" = Continuous
 readRecordMode "SPIKE"      = Spike
 readRecordMode "TRACKER"    = Tracker
 
-data ExtractionType = TetrodeWaveforms deriving (Eq, Show)
+data ExtractionType = TetrodeWaveforms
+                    | ContinuousData
+                    deriving (Eq, Show)
 
 readExtractionType :: String -> ExtractionType
 readExtractionType "tetrode waveforms" = TetrodeWaveforms
+readExtractionType "continuous data"   = ContinuousData
 
 type DatumName = String
 
@@ -71,8 +74,6 @@ data FileInfo = FileInfo { hProgram     :: String
                          , hChanDescrs  :: [ChanDescr]
                          } deriving (Eq, Show)
 
-type FileName = String
-
 parseFields :: CharParser () [RecordDescr]
 parseFields = do
   fields <- many parseField
@@ -90,7 +91,8 @@ parseField = do
   many (char '\t')
   return (fieldName, datumTypeFromIntegral (read datumCode), read datumCount)
 
-getFileInfo :: FileName -> IO (Either String FileInfo)
+-- This is fileinfo for SPIKE files and EEG files.  Should get a rename
+getFileInfo :: FilePath -> IO (Either String FileInfo)
 getFileInfo fn = do
   c   <- readFile fn :: IO String
   case paramStringsMap $ parse pFileHeader "MWL File Header" c of
@@ -123,7 +125,6 @@ getFileInfo fn = do
                   <*> read `liftM` grab "nelect_chan"
                   <*> readRecordMode `liftM` grab "mode"
                   <*> traverse (grabChannelDescr pMap) [0 .. nChans - 1])
-
 
 grabChannelDescr :: Map String String -> Integer -> Either String ChanDescr
 grabChannelDescr m n = let grab k = case Map.lookup k m of
@@ -169,19 +170,20 @@ pFileHeader = do
   pairs <- many pHeaderLine
   string "%%ENDHEADER\n"
   return pairs
-
+  
 pHeaderLine :: CharParser () (String, Maybe String)
 pHeaderLine = do
   entry <- try pPair
            <|> try pUnusedLine
            <|> try pMalformedPair
+           <|> try pNonsenseLine
            <?> "unparsable line"
   return entry
 
 pPair :: CharParser () (String, Maybe String)
 pPair = do
-  string "% "
-  spaces
+  char '%'
+  many (char '\t' <|> char ' ')
   name <- many pKeyChar
   value <- optionMaybe (pKVSep >> many pValChar)
   char '\n'
@@ -190,9 +192,17 @@ pPair = do
 stripTrailingSpaces :: String -> String
 stripTrailingSpaces s = reverse . dropWhile (== ' ') . reverse $ s
 
+pNonsenseLine :: CharParser () (String, Maybe String)
+pNonsenseLine = do
+  char '%'
+  many (noneOf ("\n%"))
+  char '\n'
+  return ("",Nothing)
+
 pMalformedPair :: CharParser () (String, Maybe String)
 pMalformedPair = do
   string "%"
+  many (char '\t')
   spaces
   name <- many (noneOf "%:\n")
   char '\n'
@@ -207,7 +217,7 @@ pKVSep :: CharParser () [Char]
 pKVSep = char ':' >> many (char ' ' <|> char '\t')
 
 pKeyChar :: CharParser () Char
-pKeyChar = noneOf ":\t\n"
+pKeyChar = noneOf ":\t\n%"
 
 pValChar :: CharParser () Char
 pValChar = noneOf "\n"
