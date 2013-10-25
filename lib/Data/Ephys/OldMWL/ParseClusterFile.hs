@@ -10,7 +10,7 @@ import Data.Char           (chr)
 
 parseClusters :: String -> Either ParseError (Map Int ClusterMethod)
 parseClusters = parse pClusterFile "Cluster file"
-
+aoeu 
 pClusterFile :: Parsec String () (Map Int ClusterMethod)
 pClusterFile = do
   many pHeader
@@ -53,9 +53,22 @@ pProjectionPoly = do
   many (noneOf "\n") >> newline
   pts <- replicateM nPoint $ do
 --    x <- read `liftM` many digit <*> char '.' <*> many digit
-    x <- float
+    x <- pDouble
     spaces
-    y <- read `liftM` many digit <*> char '.' <*> many digit
+    y <- pDouble
     newline
     return (x,y)
   return $ (clustId, CartBound proj1 proj2 pts)
+  
+pNumber :: Parsec String () String
+pNumber = many1 digit
+  
+pInt :: Parsec String () String
+pInt = pPlus <|> pMinus <|> pNumber
+  where pPlus  = char '+' *> pNumber
+        pMinus = (:) <$> char '-' <*> pNumber 
+
+pDouble :: Parsec String () Double
+pDouble = rd <$> ((++) <$> pInt <*> pDecimal)
+  where rd = read :: String -> Double
+        pDecimal = option "" ((:) <$> char '.' <*> pNumber)
