@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards, OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards, OverloadedStrings, NoMonomorphismRestriction #-}
 
 module Data.Ephys.OldMWL.Parse where
 
@@ -6,7 +6,10 @@ import Control.Monad (forM_, replicateM, forever)
 import Data.Maybe (listToMaybe)
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
-import qualified Data.Vector.Unboxed as U hiding (map, forM_, any, replicateM, zipWith)
+import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed hiding (map, forM_, any, replicateM,
+                                   zipWith, drop, take, head,
+                                   filter, (++))
 import GHC.Int
 import Pipes
 import qualified Pipes.Prelude as PP
@@ -59,52 +62,56 @@ decodeTime = (/ 10000) . fromIntegral
 fromBE16 :: Word16 -> Word16
 fromBE16 x = (x `shiftL` 8) .|. (x `shiftR` 8)
 
+-- 'cast'int word to int, right?
 word16ToInt16 :: Word16 -> Int16
 word16ToInt16 x = fromIntegral x - ( (fromIntegral (maxBound :: Word16)) `div` 2)
 
+-- MWL units go as -2^13 -> (2^13-1)  => -10V -> 10V
+mwlUnitsToVoltage :: Double -> Double -> Double
+mwlUnitsToVoltage gain inV = inV * cVG/bMWL + (zMWL / bMWL)
+  where bMWL= 2^(13::Int) - 1
+        zMWL = -1/2^(15::Int)
+        cVG  = 10 / gain
+    
 -- Assuming the Int16 is signed
-decodeVoltage :: Double -> Word16 -> Double
-decodeVoltage gain inV =
---  fromIntegral ((fromIntegral . fromBE16 $ inV) / (2 ** 14) - 10.0) * 10 / gain - 10.0
---  10.0 * ( fromIntegral inV ) / (2 ^ (14 :: Int) - 1) / gain
+wordToMWLDouble :: Word16 -> Double
+wordToMWLDouble inV =
   fromIntegral . word16ToInt16 $ inV
-
-spikeFromMWLSpike :: FileInfo -> MWLSpike -> Arte.TrodeSpike
-spikeFromMWLSpike FileInfo{..} MWLSpike{..} = undefined
 
 chunkToLength :: [a] -> Int -> [[a]]
 chunkToLength xs n = aux [] xs
-  where aux acc []  = reverse acc
-        aux acc xs' = aux (take n xs' : acc) (drop n xs')
-
-{-
-getInt16be :: Get Int16
-getInt16be = do
-  bigByte    <- get
-  littleByte <- get
-  -}
+  where aux acc []  = Prelude.reverse acc
+        aux acc xs' = aux (Prelude.take n xs' : acc) (Prelude.drop n xs')
 
 hMatrixVecToUnboxedVec :: Data.Packed.Vector.Vector Double -> U.Vector Double
-hMatrixVecToUnboxedVec = U.fromList . toList
+hMatrixVecToUnboxedVec = U.fromList . Data.Packed.Vector.toList
+
+fileGains :: FileInfo -> [Double]
+fileGains FileInfo{..} = let gains' = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs in
+  case hProbe of
+    0 -> take 4 gains'
+    1 -> take 4 . drop 4 $ gains'
+    n -> error $ "Can't have probe " ++ show n
 
 parseSpike :: FileInfo -> Get MWLSpike
 parseSpike fi@FileInfo{..}
   | okSpikeFile fi = --FIXME
     -- tsType unused because we're assuming tsType -> double.  Fix this by figuring out the
     -- MWL int to type code
-    let allGains = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs :: [Double]
-        gains = if hProbe == 0 then take 4 allGains else take 4 . drop 4 $ allGains
+    let gains = fileGains fi
         Just (_,_,totalSampsPerSpike) = listToMaybe $ filter (\(n,_,_) -> n == "waveform") hRecordDescr
     in do
       ts <- getWord32le :: Get Word32
+      -- grab one sample at a time (word16) from the stream: nchans * nsampsperchan
       vs <- replicateM (fromIntegral totalSampsPerSpike) getWord16le
-      let vsInt = map (fromIntegral . word16ToInt16) vs
-          vsMat  = ( fromIntegral (totalSampsPerSpike `div` hNTrodeChans) >< fromIntegral hNTrodeChans ) vsInt
-          vsVecs = toColumns vsMat :: [Vector Double]
+      let fI = fromIntegral
+          vsInt = map (fI . word16ToInt16) vs
+          -- Make a matrix of the sample vector (>< is from Data.Packed.Matrix)
+          vsMat  = fI (totalSampsPerSpike `div` hNTrodeChans) >< fI hNTrodeChans $ vsInt
+          -- Transpose it into a list (toColumns from Data.Packed.Matrix)
+          vsVecs = toColumns vsMat :: [Data.Packed.Vector.Vector Double]
+          -- From Matrix's Vector to the usual Vector
           vsUVecs = map hMatrixVecToUnboxedVec vsVecs
-{-      let wfs  = vs `chunkToLength` (fromIntegral totalSampsPerSpike `div` fromIntegral hNTrodeChans)
-          wfsD = zipWith (\g xs -> map (decodeVoltage g) xs) gains wfs
-          wfsV = map U.fromList wfsD -}
       return $ MWLSpike (decodeTime ts) vsUVecs
   | otherwise    = error "Failed okFileInfo test"
 
@@ -136,9 +143,11 @@ catSpike' = forever $ do
   yield s
 
 mwlToArteSpike :: FileInfo -> T.Text -> MWLSpike -> Arte.TrodeSpike
-mwlToArteSpike _ tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
+mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
   where tTime      = mwlSpikeTime s
-        tWaveforms = mwlSpikeWaveforms s
+        gains      = fileGains fi
+        tWaveforms = Prelude.zipWith
+                     (\g -> U.map (mwlUnitsToVoltage g)) gains (mwlSpikeWaveforms s)
         tOpts = 1001 -- TODO: Get trodeopts
 
 {-

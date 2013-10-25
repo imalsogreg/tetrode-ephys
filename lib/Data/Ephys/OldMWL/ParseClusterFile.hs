@@ -1,15 +1,24 @@
 module Data.Ephys.OldMWL.ParseClusterFile where
 
 import Data.Ephys.Cluster
+import Data.Ephys.OldMWL.Parse
+import Data.Ephys.OldMWL.FileInfo
 
 import Data.Map
 import Text.Parsec
 import Control.Monad (liftM, replicateM)
-import Control.Applicative ((<$),(<*),(*>),(<*>),(<$>), liftA)
-import Data.Char           (chr)
+import Control.Applicative ((*>),(<*>),(<$>))
+import Control.Lens
 
-parseClusters :: String -> Either ParseError (Map Int ClusterMethod)
-parseClusters = parse pClusterFile "Cluster file"
+getClusters :: FilePath -> FilePath -> Either String (Map Int ClusterMethod)
+getClusters clustFile waveformFile = do
+  clusts <- parseClusters `liftM` readFile clustFile :: IO (Either String (Map Int ClusterMethod))
+  gains  <- fileGains `liftM` getFileInfo waveformFile
+  return $ clusts 
+
+
+parseClusters :: String -> [Double] -> Either ParseError (Map Int ClusterMethod)
+parseClusters contents gains = parse pClusterFile "Cluster file" contents
 
 foldList :: [(Int, CartBound)] -> Map Int ClusterMethod
 foldList bs = Prelude.foldl appendByKey empty bs
@@ -18,49 +27,46 @@ appendByKey :: Map Int ClusterMethod -> (Int, CartBound) -> Map Int ClusterMetho
 appendByKey m (k,v) = case Data.Map.lookup k m of
   Nothing                     -> insert k (ClustIntersection [ClustCartBound v]) m
   Just (ClustIntersection vs) -> insert k (ClustIntersection ((ClustCartBound v:vs))) m
-
-{-
-pHeader :: Parsec String () (Map Int ClusterMethod) 
-pHeader = char '%' *> many (noneOf "\n") *> newline
--}
+  Just _                      -> error "Impossible case - MWL clusts are intersections"
 
 pClusterFile :: Parsec String () (Map Int ClusterMethod)
 pClusterFile = do
-  many pHeader
+  _ <- many pHeader
   assoc <- many pProjectionPoly
   eof
   return $ foldList  assoc
 
 pHeader :: Parsec String st ()
 pHeader = do
-  char '%'
-  many (noneOf "\n")
-  newline
+  _ <- char '%'
+  _ <- many (noneOf "\n")
+  _ <- newline
   return ()
 
 pProjectionPoly :: Parsec String () (Int, CartBound)
 pProjectionPoly = do
-  newline
+  _ <- newline
   clustId <- read `liftM` many1 digit
-  newline
+  _ <- newline
   proj1 <- read `liftM` many1 digit
-  char '\t'
+  _ <- char '\t'
   proj2 <- read `liftM` many1 digit
-  newline
-  many (noneOf "\n\t")
-  newline
-  many (noneOf "\n\t")
-  newline
+  _ <- newline
+  _ <- many (noneOf "\n\t")
+  _ <- newline
+  _ <- many (noneOf "\n\t")
+  _ <- newline
   nPoint <- read `liftM` many1 digit
-  many (noneOf "\n")
-  newline
+  _ <- many (noneOf "\n")
+  _ <- newline
   pts <- replicateM nPoint $ do
     x <- pDouble
-    char '\t'
+    _ <- char '\t'
     y <- pDouble
-    newline
+    _ <- newline
     return (x,y)
-  return $ (clustId, CartBound proj1 proj2 pts)
+  -- Projection indices in MWL are 1-indexed.  We want 0-indexed.
+  return $ (clustId, CartBound (proj1 - 1) (proj2 - 1) pts)
   
 pNumber :: Parsec String () String
 pNumber = many1 digit
