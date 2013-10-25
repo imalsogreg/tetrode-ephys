@@ -48,4 +48,5 @@ Library
     Data.Ephys.Spike
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
+    Data.Ephys.OldMWL.ParseClusterFile
     Data.Ephys.TimeSignal.Filter
