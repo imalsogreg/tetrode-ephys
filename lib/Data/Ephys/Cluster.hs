@@ -18,10 +18,13 @@ data CartBound = CartBound { _cartXChan :: ChanInd
                       deriving (Eq, Show)
 
 $(makeLenses ''CartBound)
-                               
-data ClusterMethod = ClustCartBound 
-                   | ClustPolarBound
-                   | ClustSoftCartesian
+
+data PolarBound = PolarBound -- Placeholder
+                  deriving (Eq, Show)
+                  
+data ClusterMethod = ClustCartBound     CartBound
+                   | ClustPolarBound    PolarBound
+                   | ClustSoftCartesian 
                    | ClustIntersection [ClusterMethod]
                    | ClustUnion [ClusterMethod]
                    deriving (Eq, Show)
