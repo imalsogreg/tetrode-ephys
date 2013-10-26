@@ -10,15 +10,32 @@ import Control.Monad (liftM, replicateM)
 import Control.Applicative ((*>),(<*>),(<$>))
 import Control.Lens
 
-getClusters :: FilePath -> FilePath -> Either String (Map Int ClusterMethod)
+getClusters :: FilePath -> FilePath -> IO (Either String (Map Int ClusterMethod))
 getClusters clustFile waveformFile = do
-  clusts <- parseClusters `liftM` readFile clustFile :: IO (Either String (Map Int ClusterMethod))
-  gains  <- fileGains `liftM` getFileInfo waveformFile
-  return $ clusts 
+  eClusts <- parseClusters `liftM` readFile clustFile :: IO (Either ParseError (Map Int ClusterMethod))
+  eFI     <- getFileInfo waveformFile :: IO (Either String FileInfo)
+  case (eClusts,eFI) of
+    (Right clusts, Right fi) -> 
+      return $ Right (Data.Map.map (clusterMWLToVolts (fileGains fi)) clusts)
+    _ -> return $ Left "Unsuccessful at getting clusters and adjusting their gains."
 
+boundMWLToVolts :: [Double] -> CartBound -> CartBound
+boundMWLToVolts gains b@(CartBound _ _ pts) =
+  let gainX = gains !! (b ^. cartXChan) :: Double
+      gainY = gains !! (b ^. cartYChan) in
+  b { _cartPolygon = Prelude.map (\(x,y) -> (mwlUnitsToVoltage gainX x, mwlUnitsToVoltage gainY y)) pts }
+      
 
-parseClusters :: String -> [Double] -> Either ParseError (Map Int ClusterMethod)
-parseClusters contents gains = parse pClusterFile "Cluster file" contents
+clusterMWLToVolts :: [Double] -> ClusterMethod -> ClusterMethod
+clusterMWLToVolts gains (ClustCartBound cb) =
+  ClustCartBound (boundMWLToVolts gains cb)
+clusterMWLToVolts gains (ClustIntersection bs) =
+  ClustIntersection (Prelude.map (clusterMWLToVolts gains) bs)
+clusterMWLToVolts _ _ =
+  error "Impossible case - MWL clusters are all intersections of cartesian bounds"
+
+parseClusters :: String -> Either ParseError (Map Int ClusterMethod)
+parseClusters contents = parse pClusterFile "Cluster file" contents
 
 foldList :: [(Int, CartBound)] -> Map Int ClusterMethod
 foldList bs = Prelude.foldl appendByKey empty bs
