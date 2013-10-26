@@ -3,13 +3,13 @@
 module Data.Ephys.Cluster where
 
 import Data.Ephys.Spike
-import Data.Vector as V
+import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as U
 
 import Control.Lens
 
 type ChanInd = Int
 type Polygon = [(Double,Double)]
-
 
 data CartBound = CartBound { _cartXChan :: ChanInd
                            , _cartYChan :: ChanInd
@@ -42,16 +42,18 @@ int pnpoly(int nvert, float *vertx, float *verty, float testx, float testy)
   return c;
 }
 -}
-{-
-pointInPolygon :: Polygon -> Point -> Bool
-pointInPolygon polyPts (tx,ty) = loop 0 lastInd False where
-  -- Final case
-  loop i j c
-    | i == V.length polyPts                          = c
-    | yTest (polyPts ! i) (polyPts ! j)
-                           && slopeTest =  loop (succ i) i c
-    | otherwise = False
-  lastInd = V.length polyPts - 1
-  yTest (x0,y0) (x1,y1) =  (y1 > tY) !=
-slopeTest (x0,y0) (x1,y1)
--}
+
+pointInPolygon :: Polygon -> (Double,Double) -> Bool
+pointInPolygon polyPts' (tx,ty) = 
+  loop 0 lastInd False where
+    lastInd = length polyPts' - 1
+    (xs,ys) = let pts = U.fromList polyPts' in U.unzip pts  
+    (xn,yn) = ((xs U.!), (ys U.!))  -- convenient accessors
+    loop i j c
+      | i == length polyPts' = c --return
+      | yTest && mTest       = loop (succ i) i (not c)
+      | otherwise            = loop (succ i) i c
+      where
+        yTest     = (yn i > ty) /= (yn j > ty)
+        -- slope test
+        mTest = tx < (xn j - xn i)*(ty - yn i)/(yn j - yn i) + xn i
