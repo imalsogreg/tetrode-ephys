@@ -29,8 +29,21 @@ data ClusterMethod = ClustCartBound     CartBound
                    | ClustUnion [ClusterMethod]
                    deriving (Eq, Show)
 
-spikeInCluster :: Cluster -> TrodeSpike -> Bool
-spikeInCluster (ClusterCartBound cb) s = let amps = spikeAmplitudes s in
+spikeInCluster :: ClusterMethod -> TrodeSpike -> Bool
+spikeInCluster (ClustCartBound cb) s =
+  pointInPolygon (cb ^. cartPolygon) p
+  where
+    amps = spikeAmplitudes s
+    p    = (amps !! (cb ^. cartXChan), amps !! (cb ^. cartYChan))
+spikeInCluster (ClustPolarBound _) _ =
+  error "Not implemented polar clusts"
+spikeInCluster (ClustSoftCartesian) _ =
+  error "Not implemented soft cartesian clusts"
+spikeInCluster (ClustIntersection cbs) s =
+  all (`spikeInCluster` s) cbs
+spikeInCluster (ClustUnion cbs) s =
+  any (`spikeInCluster` s) cbs
+
   
 
 {-
