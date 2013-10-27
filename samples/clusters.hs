@@ -25,6 +25,7 @@ main = do
   tt <- BSL.readFile ttFile
   Right fi <- getFileInfo ttFile
   clustsE <- getClusters clustFile ttFile
+  sTest <- mySpike
   case clustsE of
     Right clustMap -> case Map.lookup 1 clustMap of
       Nothing -> error "Couldn't find cluster 1"
@@ -32,5 +33,9 @@ main = do
 {-        len <- PP.length 
                (dropResult (produceTrodeSpikes "01" fi tt) >-> 
                 PP.filter (spikeInCluster cm)) -}
-        runEffect $ dropResult (produceTrodeSpikes "01" fi tt) >-> PP.print
+        --print cm
+        print $ spikeInCluster cm sTest
+--        runEffect $ dropResult (produceTrodeSpikes "01" fi tt) >-> PP.take 1 >->
+--          PP.filter (spikeInCluster cm) >-> PP.print
+        --        runEffect $ dropResult (produceTrodeSpikes "01" fi tt) >-> PP.print
 --        print len
