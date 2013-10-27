@@ -29,6 +29,10 @@ data ClusterMethod = ClustCartBound     CartBound
                    | ClustUnion [ClusterMethod]
                    deriving (Eq, Show)
 
+spikeInCluster :: Cluster -> TrodeSpike -> Bool
+spikeInCluster (ClusterCartBound cb) s = let amps = spikeAmplitudes s in
+  
+
 {-
 -- Transcribe this very imparative c code
 int pnpoly(int nvert, float *vertx, float *verty, float testx, float testy)

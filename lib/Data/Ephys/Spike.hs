@@ -1,11 +1,12 @@
-{-# LANGUAGE BangPatterns, TypeSynonymInstances, RecordWildCards #-}
+{-# LANGUAGE BangPatterns, TypeSynonymInstances, RecordWildCards, NoMonomorphismRestriction #-}
 
 module Data.Ephys.Spike where
 
 import Data.Ephys.TimeSignal.Filter
 
-import Data.Text
+import Data.Text hiding (zip, map,foldl1')
 import Data.Text.Encoding
+import Data.List (foldl1')
 import Data.Time
 import Control.Monad (liftM)
 import qualified Data.Serialize as S
@@ -56,6 +57,19 @@ instance B.Binary TrodeSpike where
     waveforms <- B.get
     return $ TrodeSpike name opts time waveforms
 
+spikePeakIndex :: TrodeSpike -> Int
+spikePeakIndex s = 
+  fst . foldl1' maxBySnd . map chanPeakIndexAndV . spikeWaveforms $ s
+
+chanPeakIndexAndV :: U.Vector Voltage -> (Int,Voltage)
+chanPeakIndexAndV vs = U.foldl1' maxBySnd $ U.zip (U.fromList [0..]) vs
+
+maxBySnd :: Ord b => (a,b) -> (a,b) -> (a,b)
+maxBySnd a@(_,v) b@(_,v') = if v > v' then a else b
+
+spikeAmplitudes  :: TrodeSpike -> [Double]
+spikeAmplitudes s = map (U.! i) (spikeWaveforms s)
+  where i = spikePeakIndex s
 
 -- |Representation of tetroe-recorded AP features
 data SpikeModel = SpikeModel { mSpikeTime          :: ExperimentTime
