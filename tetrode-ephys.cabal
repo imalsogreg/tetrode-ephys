@@ -46,7 +46,18 @@ Library
     Data.Ephys
     Data.Ephys.EphysDefs
     Data.Ephys.Spike
+    Data.Ephys.Cluster
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
     Data.Ephys.TimeSignal.Filter
+
+Executable clusters
+  Hs-Source-Dirs: samples
+  Main-Is:        clusters.hs
+  Build-Depends:  base,
+                  containers,
+                  pipes,
+                  bytestring,
+                  text,
+                  tetrode-ephys

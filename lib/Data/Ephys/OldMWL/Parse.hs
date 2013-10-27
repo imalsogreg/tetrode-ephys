@@ -131,6 +131,9 @@ produceMWLSpikes fi b = let myGet = parseSpike fi in
 produceTrodeSpikes :: T.Text -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceTrodeSpikes tName fi b = produceMWLSpikes fi b >-> PP.map (mwlToArteSpike fi tName)
 
+dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
+dropResult p = p >>= \_ -> return ()
+
 catSpike :: (Monad m) => Pipe Arte.TrodeSpike Arte.TrodeSpike m r
 catSpike = forever $ do
   s <- await
@@ -160,8 +163,6 @@ myTest = do
   --print n
   print ("Ok" :: String)
 
-dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
-dropResult p = p >>= \_ -> return ()
 
 testFile :: IO BSL.ByteString
 testFile = BSL.readFile "/home/greghale/Desktop/test.tt"
