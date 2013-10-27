@@ -27,15 +27,20 @@ main = do
   clustsE <- getClusters clustFile ttFile
   sTest <- mySpike
   case clustsE of
+    Left e -> error $ "e was: " ++ e
     Right clustMap -> case Map.lookup 1 clustMap of
       Nothing -> error "Couldn't find cluster 1"
-      Just cm -> do
-{-        len <- PP.length 
+      Just cm@(ClustIntersection polys) -> do
+        len <- PP.length 
                (dropResult (produceTrodeSpikes "01" fi tt) >-> 
-                PP.filter (spikeInCluster cm)) -}
+                PP.filter (spikeInCluster cm))
         --print cm
-        print $ spikeInCluster cm sTest
---        runEffect $ dropResult (produceTrodeSpikes "01" fi tt) >-> PP.take 1 >->
---          PP.filter (spikeInCluster cm) >-> PP.print
-        --        runEffect $ dropResult (produceTrodeSpikes "01" fi tt) >-> PP.print
---        print len
+   {-     let (ClustCartBound b) = head polys
+            amps = spikeAmplitudes sTest
+--        print $ (amps !! 0, amps !! 1)
+--        print $ pointInPolygon (_cartPolygon b) (amps !! 0, amps !! 1)
+--        print $ spikeInCluster (head polys) sTest
+        runEffect $ dropResult (produceTrodeSpikes "01" fi tt) >->
+          PP.filter (spikeInCluster cm) >-> PP.print
+        --        runEffect $ dropResult (produceTrodeSpikes "01" fi tt) >-> PP.print -}
+        print len

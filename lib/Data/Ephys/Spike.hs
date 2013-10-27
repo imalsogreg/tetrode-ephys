@@ -62,7 +62,8 @@ spikePeakIndex s =
   fst . foldl1' maxBySnd . map chanPeakIndexAndV . spikeWaveforms $ s
 
 chanPeakIndexAndV :: U.Vector Voltage -> (Int,Voltage)
-chanPeakIndexAndV vs = U.foldl1' maxBySnd $ U.zip (U.fromList [0..]) vs
+chanPeakIndexAndV vs = U.foldl1' maxBySnd $ U.zip (U.fromList [0..nSamps]) vs
+  where nSamps = U.length vs
 
 maxBySnd :: Ord b => (a,b) -> (a,b) -> (a,b)
 maxBySnd a@(_,v) b@(_,v') = if v > v' then a else b
