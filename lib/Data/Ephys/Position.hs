@@ -14,7 +14,7 @@ $(makeLenses ''Location)
 data Angle = Angle {_yaw :: Double, _pitch :: Double, _roll :: Double}
            deriving (Eq, Show)
 
-$(makeLenes ''Location)
+$(makeLenses ''Angle)
 
 data Position = Position {_location :: Location, _angle :: Angle}
               deriving (Eq, Show)
