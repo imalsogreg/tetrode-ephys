@@ -1,8 +1,23 @@
-module Position where
+{-# LANGUAGE TemplateHaskell #-}
+
+module Data.Ephys.Position where
 
 import Data.Ephys.EphysDefs
 
-data Location = Location {x :: Double, y :: Double, z :: Double}
-type Heading  = (Double, Double, 
+import Control.Lens
 
-data Position = Position { location :: 
+data Location = Location {_x :: Double, _y :: Double, _z :: Double}
+              deriving (Eq, Show)
+
+$(makeLenses ''Location)
+
+data Angle = Angle {_yaw :: Double, _pitch :: Double, _roll :: Double}
+           deriving (Eq, Show)
+
+$(makeLenses ''Angle)
+
+data Position = Position {_location :: Location, _angle :: Angle}
+              deriving (Eq, Show)
+                       
+$(makeLenses ''Position)
+

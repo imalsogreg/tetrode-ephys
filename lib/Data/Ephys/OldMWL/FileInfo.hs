@@ -37,11 +37,13 @@ readRecordMode "TRACKER"    = Tracker
 
 data ExtractionType = TetrodeWaveforms
                     | ContinuousData
+                    | ExtendedDualDiodePosition
                     deriving (Eq, Show)
 
 readExtractionType :: String -> ExtractionType
 readExtractionType "tetrode waveforms" = TetrodeWaveforms
 readExtractionType "continuous data"   = ContinuousData
+readExtractionType "extended dual diode position" = ExtendedDualDiodePosition
 
 type DatumName = String
 
