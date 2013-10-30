@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards, OverloadedStrings #-}
+
 module Data.Ephys.OldMWL.FileInfo where
        
 --------------------------------------------------------------------------------
@@ -25,6 +27,8 @@ import Data.Traversable (traverse)
 import Text.ParserCombinators.Parsec
 import Data.List (isSuffixOf)
 import Data.Map as Map
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BSL
 
 data FileType = Binary | Ascii deriving (Eq, Show, Read)
 
@@ -76,6 +80,15 @@ data FileInfo = FileInfo { hProgram     :: String
                          , hChanDescrs  :: [ChanDescr]
                          } deriving (Eq, Show)
 
+dropHeaderInFirstChunk :: BSL.ByteString -> BSL.ByteString
+dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
+                               firstChunk = head . BSL.toChunks $ b
+                               (h,t) = BS.breakSubstring headerEnd firstChunk
+                           in
+                            if BS.null t
+                            then b
+                            else BSL.drop (fromIntegral (BS.length h + BS.length headerEnd)) b
+
 parseFields :: CharParser () [RecordDescr]
 parseFields = do
   fields <- many parseField
@@ -92,6 +105,35 @@ parseField = do
   datumCount <- many digit
   many (char '\t')
   return (fieldName, datumTypeFromIntegral (read datumCode), read datumCount)
+
+okSpikeFile :: FileInfo -> Bool
+okSpikeFile FileInfo{..} = hRecMode == Spike
+                           && hRecordDescr `hasField` "timestamp"
+                           && hRecordDescr `hasField` "waveform"
+                           && fieldIsType hRecordDescr "timestamp" DULong
+                           && fieldIsType hRecordDescr "waveform"  DShort
+                           -- waveform elem's type is DShort (16-bit)
+
+okPosFile :: FileInfo -> Bool
+okPosFile FileInfo{..} = hRecMode == Tracker
+                         && hasField hRecordDescr "timestamp"
+                         && hasField hRecordDescr "xfront"
+                         && hasField hRecordDescr "yfront"
+                         && hasField hRecordDescr "xback"
+                         && hasField hRecordDescr "yback"
+
+okPFile :: FileInfo -> Bool
+okPFile FileInfo{..} = hRecMode == Tracker
+                       && all (hRecordDescr `hasField`) ["timestamp","xfront","yfront","xback","yback"]
+                       && all id (zipWith (fieldIsType hRecordDescr)
+                               ["timestamp","xfront","yfront","xback","yback"]
+                               [DShort, DShort, DShort, DShort])
+
+hasField :: [RecordDescr] -> String -> Bool
+hasField flds f = any (\(name,_,_) -> name == f) flds
+
+fieldIsType :: [RecordDescr] -> String -> DatumType -> Bool
+fieldIsType flds f t = Prelude.all (==True) [ (fn == f) <= (ft ==t) | (fn,ft,_) <- flds ]
 
 -- This is fileinfo for SPIKE files and EEG files.  Should get a rename
 getFileInfo :: FilePath -> IO (Either String FileInfo)

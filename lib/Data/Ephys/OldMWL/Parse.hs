@@ -9,7 +9,7 @@ import qualified Data.ByteString as BS
 import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed hiding (map, forM_, any, replicateM,
                                    zipWith, drop, take, head,
-                                   filter, (++))
+                                   filter, (++), all)
 import GHC.Int
 import Pipes
 import qualified Pipes.Prelude as PP
@@ -29,27 +29,6 @@ data MWLSpike = MWLSpike { mwlSpikeTime      :: Double
                          , mwlSpikeWaveforms :: [U.Vector Double]
                          } deriving (Eq, Show)
 
-okSpikeFile :: FileInfo -> Bool
-okSpikeFile FileInfo{..} = hRecMode == Spike
-                           && hRecordDescr `hasField` "timestamp"
-                           && hRecordDescr `hasField` "waveform"
-                           && fieldIsType hRecordDescr "timestamp" DULong
-                           && fieldIsType hRecordDescr "waveform"  DShort
-                           -- waveform elem's type is DShort (16-bit)
-
-okPosFile :: FileInfo -> Bool
-okPosFile FileInfo{..} = hRecMode == Tracker
-                         && hasField hRecordDescr "timestamp"
-                         && hasField hRecordDescr "xfront"
-                         && hasField hRecordDescr "yfront"
-                         && hasField hRecordDescr "xback"
-                         && hasField hRecordDescr "yback"
-
-hasField :: [RecordDescr] -> String -> Bool
-hasField flds f = any (\(name,_,_) -> name == f) flds
-
-fieldIsType :: [RecordDescr] -> String -> DatumType -> Bool
-fieldIsType flds f t = Prelude.all (==True) [ (fn == f) <= (ft ==t) | (fn,ft,_) <- flds ]
 
 writeSpike :: MWLSpike -> Put
 writeSpike (MWLSpike tSpike waveforms) = do put tSpike
@@ -115,14 +94,6 @@ parseSpike fi@FileInfo{..}
       return $ MWLSpike (decodeTime ts) vsUVecs
   | otherwise    = error "Failed okFileInfo test"
 
-dropHeaderInFirstChunk :: BSL.ByteString -> BSL.ByteString
-dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
-                               firstChunk = head . BSL.toChunks $ b
-                               (h,t) = BS.breakSubstring headerEnd firstChunk
-                           in
-                            if BS.null t
-                            then b
-                            else BSL.drop (fromIntegral (BS.length h + BS.length headerEnd)) b
 
 produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceMWLSpikes fi b = let myGet = parseSpike fi in
