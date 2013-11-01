@@ -32,6 +32,8 @@ data Position = Position {_location :: Location
                        
 $(makeLenses ''Position)
 
-type TrackSpec = Graph 
+type TrackSpec = Graph  -- node :: (x,y,z), key :: String
+
+
 
 data LinearPos = LinearPos {
