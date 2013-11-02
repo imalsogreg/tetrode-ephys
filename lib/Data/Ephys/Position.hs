@@ -4,7 +4,9 @@ module Data.Ephys.Position where
 
 import Data.Ephys.EphysDefs
 
+import Data.Graph
 import Control.Lens
+import Data.Trees.KdTree
 
 data Location = Location {_x :: Double, _y :: Double, _z :: Double}
               deriving (Eq, Show)
@@ -31,12 +33,15 @@ $(makeLenses ''Angle)
 $(makeLenses ''Heading)
 $(makeLenses ''Position)
 
-type TrackBin = 
+data TrackBin = TrackBin { _binNam :: String
+                         , _binX   :: Double
+                         , _binY   :: Double
+                         } deriving (Eq, Show)
 
-type TrackSpec = TrackSpek { _keyPoints :: Graph }  -- node :: (x,y), key :: String
+data TrackSpec = TrackSpek { _keyPoints :: Graph }  -- node :: (x,y), key :: String
 
-data Track = Track { _trackBin :: KDTree TrackBin
-                   , _trackWid :: Double
+data Track = Track { _trackBins :: KdTree TrackBin
+                   , _trackWid  :: Double
                    } deriving (Eq, Show)
 
 data TrackDirection = Outbound | Inbound

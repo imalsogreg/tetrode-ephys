@@ -42,6 +42,7 @@ Library
     , hmatrix
     , lens
     , pipes-rt
+    , KdTree
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
