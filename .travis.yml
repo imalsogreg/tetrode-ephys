@@ -7,7 +7,7 @@ env:
  - GHCVER=7.6.3
 
 before_install:
- - sudo apt-get install libgsl0-dev
+ - sudo apt-get install libgsl0-dev liblapack-dev libblas-dev 
  - sudo add-apt-repository -y ppa:hvr/ghc
  - sudo apt-get update
  - sudo apt-get install cabal-install-1.18 ghc-$GHCVER happy
