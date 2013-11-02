@@ -11,10 +11,10 @@ before_install:
  - sudo apt-get update
  - sudo apt-get install cabal-install-1.18 ghc-$GHCVER happy
  - export PATH=/opt/ghc/$GHCVER/bin:$PATH
- - git clone http://github.com/ImAlsoGreg/pipes-rt
- - cd pipes-rt
- - cabal-1.18 install
- - cd ..
+ - "git clone http://github.com/ImAlsoGreg/pipes-rt"
+ - "cd pipes-rt"
+ - "cabal-1.18 install"
+ - "cd .."
 
 install:
  - cabal-1.18 update
