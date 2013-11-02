@@ -13,24 +13,27 @@ data Location = Location {_x :: Double, _y :: Double, _z :: Double}
 
 data Angle = Angle {_yaw :: Double, _pitch :: Double, _roll :: Double}
            deriving (Eq, Show)
-
-data Heading = Heading {_dxdt :: Double, _dydt :: Double, _dzdt :: Double}
+{-
+data Heading = Heading { _theta :: Double}
                deriving (Eq, Show)
 
+data Speed = Speed { _mps :: Double }
+           deriving (Eq, Show)
+-}
 data PosConf = ConfNone | ConfUnsure | ConfSure
              deriving (Eq, Ord, Show)
 
 -- Full 3D position data.  For position relative to a linear track, see TrackPos
-data Position = Position {_location       :: Location
+data Position = Position { _location      :: Location
                          , _angle         :: Angle
-                         , _heading       :: Heading
+                         , _heading       :: Double
+                         , _speed         :: Double
                          , _posConfidence :: PosConf
                          }
               deriving (Eq, Show)
 
 $(makeLenses ''Location)
 $(makeLenses ''Angle)
-$(makeLenses ''Heading)
 $(makeLenses ''Position)
 
 -- TODO - risky to depend on KdTree?  Not very active package
