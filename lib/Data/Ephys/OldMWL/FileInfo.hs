@@ -28,6 +28,7 @@ import Text.ParserCombinators.Parsec
 import Data.List (isSuffixOf)
 import Data.Map as Map
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ByteString.Lazy as BSL
 
 data FileType = Binary | Ascii deriving (Eq, Show, Read)
@@ -81,7 +82,7 @@ data FileInfo = FileInfo { hProgram     :: String
                          } deriving (Eq, Show)
 
 dropHeaderInFirstChunk :: BSL.ByteString -> BSL.ByteString
-dropHeaderInFirstChunk b = let headerEnd = "%%ENDHEADER\n"
+dropHeaderInFirstChunk b = let headerEnd = BSC.pack "%%ENDHEADER\n"
                                firstChunk = head . BSL.toChunks $ b
                                (h,t) = BS.breakSubstring headerEnd firstChunk
                            in
