@@ -13,7 +13,7 @@ before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:$PATH
  - git clone http://github.com/ImAlsoGreg/pipes-rt
  - cd pipes-rt
- - cabal install
+ - cabal-1.18 install
  - cd ..
 
 install:
