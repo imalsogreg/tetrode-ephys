@@ -36,6 +36,14 @@ $(makeLenses ''Location)
 $(makeLenses ''Angle)
 $(makeLenses ''Position)
 
+locSqDist :: Location -> Location -> Double
+locSqDist a b = (b^.z - a^.z)^(2::Int)
+                + (b^.y - a^.y)^(2::Int)
+                + (b^.x - a^.x)^(2::Int)
+
+locDist :: Location -> Location -> Double
+locDist a b = sqrt $ locSqDist a b
+
 -- TODO - risky to depend on KdTree?  Not very active package
 instance KD.Point Location where
   dimension   = const 3
