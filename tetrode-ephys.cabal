@@ -48,9 +48,12 @@ Library
     Data.Ephys.EphysDefs
     Data.Ephys.Spike
     Data.Ephys.Cluster
+    Data.Ephys.Position
+    Data.Ephys.TrackPosition
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
+    Data.Ephys.OldMWL.ParsePFile
     Data.Ephys.TimeSignal.Filter
 
 Executable clusters
@@ -62,3 +65,12 @@ Executable clusters
                   bytestring,
                   text,
                   tetrode-ephys
+
+Executable watchpos
+  Hs-Source-Dirs: samples
+  Main-Is:        watchpos.hs
+  Build-Depends:  base,
+                  containers,
+                  pipes,
+                  gloss,
+                  tetrode-ephys 
