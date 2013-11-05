@@ -16,7 +16,8 @@ data TrackBin = TrackBin { _binNam :: String
                          , _binDir :: Double -- radians
                          , _binA   :: Double --
                          , _binZ   :: Double
-                         } deriving (Eq, Show)
+                         , _binWid :: Double
+                         } deriving (Eq, Ord, Show)
 
 $(makeLenses ''TrackBin)
 
@@ -30,7 +31,6 @@ instance KD.Point TrackBin where
 data TrackSpec = TrackSpec { _keyPoints :: Graph }  -- node :: (x,y), key :: String
 
 data Track = Track { _trackBins  :: [TrackBin]
-                   , _trackWidth :: Double
                    } deriving (Eq, Show)
 
 data TrackDirection = Outbound | Inbound
@@ -42,7 +42,7 @@ data TrackEccentricity = OutOfBounds | InBounds
 data TrackPos = TrackPos { _trackBin :: TrackBin
                          , _trackDir :: TrackDirection
                          , _trackEcc :: TrackEccentricity
-                         } deriving (Eq, Show)
+                         } deriving (Eq, Ord, Show)
 
 $(makeLenses ''TrackSpec)
 $(makeLenses ''Track)
@@ -56,7 +56,7 @@ allTrackPos t = [TrackPos bin dir ecc | bin <- t^.trackBins
 -- Use mapping from track bin to a to model 'fields' in general
 -- ie an instantaneous occupancy field, a trial-sum occupancy
 -- field, or a spike rate field
-type Field a = TrackPos -> a
+type Field a = Map.Map TrackPos a
 
 trackFromSpec :: TrackSpec 
                  -> Double -- track width in metres
@@ -76,9 +76,9 @@ posToField t pos kern =
         tpC        = posToTrackPos t pos
         leastDist  = distSq binC
         tDir = if cos (pos^.heading - binC^.binDir) > 0 then Outbound else Inbound
-        ecc b = if (abs y') > (t^.trackWidth / 2) then OutOfBounds else InBounds
+        ecc b = if (abs y') > (b^.binWid / 2) then OutOfBounds else InBounds
           where (_,y') = relativeCoords binC (pos^.location^.x, pos^.location^.y)
-        inBin bin =  x' >= (binC^.binA) && x' <= (binC^.binZ)
+        inBin bin =  x' >= (bin^.binA) && x' <= (bin^.binZ)
           where (x',_) = relativeCoords binC (pos^.location^.x, pos^.location^.y)
         trackPosValUnNormalized :: TrackPos -> Double
         trackPosValUnNormalized tp = case kern of
@@ -92,13 +92,13 @@ posToField t pos kern =
             else 0
         totalVal = sum $ map trackPosValUnNormalized (allTrackPos t)
         trackPosVal tp = trackPosValUnNormalized tp / totalVal
-     in trackPosVal
+     in Map.fromList $ zip (allTrackPos t) (map trackPosVal (allTrackPos t))
 
 posToTrackPos :: Track  -> Position -> Maybe TrackPos
 posToTrackPos track pos =
   let binC = trackClosestBin track pos
       (x',y') = relativeCoords binC (pos^.location^.x, pos^.location^.y)
-      ecc = if (abs x') > (track^.trackWidth/2) then OutOfBounds else InBounds
+      ecc = if (abs x') > (binC^.binWid/2) then OutOfBounds else InBounds
       tDir = if cos (pos^.heading - binC^.binDir) > 0 then Outbound else Inbound
       inBin = x' >= (binC^.binA) && x' <= binC^.binZ in
   case inBin of
@@ -106,8 +106,8 @@ posToTrackPos track pos =
     True  -> Just $ TrackPos binC tDir ecc
 
 relativeCoords :: TrackBin -> (Double,Double) -> (Double,Double)
-relativeCoords bin (x,y) = let th = (-1 * bin^.binDir) in
-  (x * cos th - y * sin th, x * sin th + y * cos th) --TODO check rotation matrix
+relativeCoords bin (x',y') = let th = (-1 * bin^.binDir) in
+  (x' * cos th - y' * sin th, x' * sin th + y' * cos th) --TODO check rotation matrix
 
 trackClosestBin :: Track -> Position -> TrackBin
 trackClosestBin track pos =
@@ -123,18 +123,19 @@ circularTrack :: (Double,Double) -- (x,y) in meters
                  -> Double       -- bin length in meters
                  -> Track
 circularTrack (cX,cY) r h w tau =
-  Track [aPoint t | t <- thetaCs] w
+  Track [aPoint t | t <- thetaCs]
   where
     fI = fromIntegral
-    diam = 2*pi*r
-    nPts = floor (diam / tau) :: Int
-    tau' = diam / fI nPts
-    thetaCs = [0, tau' .. (diam - tau')]
+    circumference = 2*pi*r
+    nPts = floor (circumference / tau) :: Int
+    thetaIncr = 2*pi/ fI nPts
+    thetaCs = [0, thetaIncr .. 2*pi-thetaIncr]
     aPoint :: Double -> TrackBin
     aPoint theta = TrackBin ""
                    (Location (r * cos theta + cX) (r * sin theta + cY) h)
                    (theta + pi/2)
                    (-1 * tau / 2) (tau / 2)
+                   w
   
 
   

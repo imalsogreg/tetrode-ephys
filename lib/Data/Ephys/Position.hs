@@ -9,10 +9,10 @@ import Control.Lens
 import qualified Data.Trees.KdTree as KD
 
 data Location = Location {_x :: Double, _y :: Double, _z :: Double}
-              deriving (Eq, Show)
+              deriving (Eq, Ord, Show)
 
 data Angle = Angle {_yaw :: Double, _pitch :: Double, _roll :: Double}
-           deriving (Eq, Show)
+           deriving (Eq, Ord, Show)
 {-
 data Heading = Heading { _theta :: Double}
                deriving (Eq, Show)
@@ -30,7 +30,7 @@ data Position = Position { _location      :: Location
                          , _speed         :: Double
                          , _posConfidence :: PosConf
                          }
-              deriving (Eq, Show)
+              deriving (Eq, Ord, Show)
 
 $(makeLenses ''Location)
 $(makeLenses ''Angle)

@@ -72,5 +72,6 @@ Executable watchpos
   Build-Depends:  base,
                   containers,
                   pipes,
+                  lens,
                   gloss,
                   tetrode-ephys 
