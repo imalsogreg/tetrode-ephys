@@ -70,13 +70,15 @@ main = playIO (InWindow "My Window" (400,400) (10,10))
        (timeUpdateWorld)
 
 eventUpdateWorld :: Event -> World -> IO World
-eventUpdateWorld (EventMotion (x',y')) (p,t) = print (unwords [show x', show y']) >> return (p',t)
-  where p' = Position (Location ((r2 x')/ r2 gScale) ((r2 y') / r2 gScale) (p^.location.z)) (Angle 0 0 0) 0 0 ConfSure
+eventUpdateWorld (EventMotion (x',y')) (p,t) =
+  let p' = Position (Location ((r2 x')/ r2 gScale) ((r2 y') / r2 gScale) (p^.location.z)) (Angle 0 0 0) 0 0 ConfSure
+  in print (unwords [show x', show y']) >> return (p',t)
 eventUpdateWorld (EventKey _ _ _ _) w = return w
+eventUpdateWorld (EventResize _) w = return w 
 
 timeUpdateWorld :: Float -> World -> IO World
 timeUpdateWorld t w = return w
 
 drawWorld :: World -> IO Picture
 drawWorld (p,t) = return $ Scale gScale gScale $ pictures [drawTrack t, drawField (posToField t p m) ]
-  where m = PosDelta
+  where m = PosGaussian 0.4

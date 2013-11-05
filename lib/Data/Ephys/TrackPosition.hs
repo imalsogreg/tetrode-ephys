@@ -77,7 +77,7 @@ posToField t pos kern =
         leastDist  = distSq binC
         tDir = if cos (pos^.heading - binC^.binDir) > 0 then Outbound else Inbound
         ecc b = if (abs y') > (b^.binWid / 2) then OutOfBounds else InBounds
-          where (_,y') = relativeCoords binC (pos^.location^.x, pos^.location^.y)
+          where (_,y') = relativeCoords b (pos^.location^.x, pos^.location^.y)
         inBin bin =  x' >= (bin^.binA) && x' <= (bin^.binZ)
           where (x',_) = relativeCoords binC (pos^.location^.x, pos^.location^.y)
         trackPosValUnNormalized :: TrackPos -> Double
@@ -106,8 +106,11 @@ posToTrackPos track pos =
     True  -> Just $ TrackPos binC tDir ecc
 
 relativeCoords :: TrackBin -> (Double,Double) -> (Double,Double)
-relativeCoords bin (x',y') = let th = (-1 * bin^.binDir) in
-  (x' * cos th - y' * sin th, x' * sin th + y' * cos th) --TODO check rotation matrix
+relativeCoords bin (x',y') = let th = (-1 * bin^.binDir)
+                                 dx = x' - bin^.binLoc.x
+                                 dy = y' - bin^.binLoc.y
+                             in
+  (dx * cos th - dy * sin th, dx * sin th + dy * cos th) --TODO check rotation matrix
 
 trackClosestBin :: Track -> Position -> TrackBin
 trackClosestBin track pos =
