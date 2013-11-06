@@ -83,7 +83,7 @@ eventUpdateWorld (EventMotion (x',y')) (p,t,occ) =
   let p' = Position 0 (Location ((r2 x')/ r2 gScale) ((r2 y') / r2 gScale) (p^.location.z))
            (Angle 0 0 0) 0 0 ConfSure
       occ' = updateField (+) occ (posToField t p (PosGaussian 0.4))
-  in print (unwords [show x', show y']) >> return (p',t,occ')
+  in return (p',t,occ')
 eventUpdateWorld (EventKey _ _ _ _) w = return w
 eventUpdateWorld (EventResize _) w = return w 
 
