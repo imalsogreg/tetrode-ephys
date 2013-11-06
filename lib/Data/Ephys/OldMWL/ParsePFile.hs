@@ -34,22 +34,15 @@ produceMWLPos :: Double -> Double -> Double -> BSL.ByteString ->
 produceMWLPos pX0 pY0 pixPerMeter f = 
   PBinary.decodeGetMany parsePRecord (PBS.fromLazy . dropHeaderInFirstChunk $ f) >-> PP.map snd
 
-parsePRecord :: Double -> Double -> Double -> Binary.Get MWLPos
-parsePRecord pX0 pY0 pixPerMeter =
-  let s = 1/pixPerMeter
-      pXToArte = (*s) . (subtract pX0)
-      pYToArte = (*s) . (subtract pY0)
-  in  do
+parsePRecord :: Binary.Get MWLPos
+parsePRecord = do
     recTs    <- getWord32le
     recXf    <- getWord16le
     recYf    <- getWord16le
     recXb    <- getWord16le
     recYb    <- getWord16le
     return $ MWLPos (decodeTime recTs)
-      (fI recXf)
-      (fI recYf)
-      (fI recXb)
-      (fI recYb)
+      (fI recXf) (fI recYf) (fI recXb) (fI recYb)
 
 mwlToArtePos :: (Double,Double)
              -> Double

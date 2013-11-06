@@ -53,8 +53,11 @@ stepPos p t loc ang conf =
         hHist'         = instantHeading : init (p^.headingHistory)
         heading'       = circMean hHist'
         instantSpeed   = locDist (p^.location) loc / dt
-        sHist'         = instantSpeed : init (p^.speedHistory)
+        sHist'         = (clipMax 100 instantSpeed) : init (p^.speedHistory)
         speed'         = mean sHist'
+
+clipMax :: Double -> Double -> Double
+clipMax m a = if a > m then m else a
 
 locDiff :: Location -> Location -> (Double,Double,Double)
 locDiff a b = (dx, dy, dz)
