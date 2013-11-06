@@ -73,13 +73,9 @@ posToField :: Track -> Position -> PosKernel -> Field Double
 posToField t pos kern =
     let distSq bin = locSqDist (pos^.location) (bin^.binLoc)
         binC       = trackClosestBin t pos
-        tpC        = posToTrackPos t pos
-        leastDist  = distSq binC
         tDir = if cos (pos^.heading - binC^.binDir) > 0 then Outbound else Inbound
         ecc b = if (abs y') > (b^.binWid / 2) then OutOfBounds else InBounds
           where (_,y') = relativeCoords b (pos^.location^.x, pos^.location^.y)
-        inBin bin =  x' >= (bin^.binA) && x' <= (bin^.binZ)
-          where (x',_) = relativeCoords binC (pos^.location^.x, pos^.location^.y)
         trackPosValUnNormalized :: TrackPos -> Double
         trackPosValUnNormalized tp = case kern of
           PosDelta    -> if tp^.trackBin == binC
@@ -88,12 +84,15 @@ posToField t pos kern =
                          then 1 else 0
           PosGaussian sd ->
             if (tp^.trackEcc) == ecc binC && (tp^.trackDir) == tDir
-            then exp( -1 * distSq (tp^.trackBin) / (2 * sd * sd) )
+            then exp( (-1) / (2 * sd * sd) * distSq (tp^.trackBin)  )
             else 0
         totalVal = sum $ map trackPosValUnNormalized (allTrackPos t)
-        trackPosVal tp = trackPosValUnNormalized tp / totalVal
+        trackPosVal tp = if totalVal > 0
+                         then trackPosValUnNormalized tp / totalVal
+                         else 1/ (fromIntegral $ length(allTrackPos t))
      in Map.fromList $ zip (allTrackPos t) (map trackPosVal (allTrackPos t))
 
+{- I don't think I use this anywhere.  And it looks wrong in ecc
 posToTrackPos :: Track  -> Position -> Maybe TrackPos
 posToTrackPos track pos =
   let binC = trackClosestBin track pos
@@ -104,6 +103,7 @@ posToTrackPos track pos =
   case inBin of
     False -> Nothing
     True  -> Just $ TrackPos binC tDir ecc
+-}
 
 relativeCoords :: TrackBin -> (Double,Double) -> (Double,Double)
 relativeCoords bin (x',y') = let th = (-1 * bin^.binDir)
@@ -140,5 +140,5 @@ circularTrack (cX,cY) r h w tau =
                    (-1 * tau / 2) (tau / 2)
                    w
   
-
-  
+updateField :: (a -> a -> a) -> Field a -> Field a -> Field a
+updateField = Map.unionWith

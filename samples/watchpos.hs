@@ -16,7 +16,7 @@ r2 = realToFrac
 
 rad2Deg = (* (-180 / pi))
 
-type World = (Position, Track)
+type World = (Position, Track, Field Double)
 
 trackPosPicture :: TrackPos -> Picture
 trackPosPicture (TrackPos bin dir ecc) = trackBinFrame bin Line
@@ -50,6 +50,12 @@ drawField :: Field Double -> Picture
 drawField field =
   pictures $ map (uncurry drawTrackPos) (Map.toList $ Map.map r2 field)
 
+drawNormalizedField :: Field Double -> Picture
+drawNormalizedField field =
+  pictures $ map (uncurry drawTrackPos) (Map.toList $ Map.map (r2 . (/fMax)) field)
+    where fMax :: Double
+          fMax = Map.foldl' max 0 field
+                 
 setAlpha :: Color -> Float -> Color
 setAlpha c alpha = case rgbaOfColor c of
   (r,g,b,_) -> makeColor r g b alpha
@@ -64,15 +70,20 @@ main :: IO ()
 main = playIO (InWindow "My Window" (400,400) (10,10))
        white
        60
-       (Position (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure, myTrack)
+       (p0,t0,f0)
        drawWorld
        (eventUpdateWorld)
        (timeUpdateWorld)
+  where p0 = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure
+        t0 = myTrack
+        f0 = Map.fromList [ (tp,0) | tp <- allTrackPos t0 ]
 
 eventUpdateWorld :: Event -> World -> IO World
-eventUpdateWorld (EventMotion (x',y')) (p,t) =
-  let p' = Position (Location ((r2 x')/ r2 gScale) ((r2 y') / r2 gScale) (p^.location.z)) (Angle 0 0 0) 0 0 ConfSure
-  in print (unwords [show x', show y']) >> return (p',t)
+eventUpdateWorld (EventMotion (x',y')) (p,t,occ) =
+  let p' = Position 0 (Location ((r2 x')/ r2 gScale) ((r2 y') / r2 gScale) (p^.location.z))
+           (Angle 0 0 0) 0 0 ConfSure
+      occ' = updateField (+) occ (posToField t p (PosGaussian 0.4))
+  in print (unwords [show x', show y']) >> return (p',t,occ')
 eventUpdateWorld (EventKey _ _ _ _) w = return w
 eventUpdateWorld (EventResize _) w = return w 
 
@@ -80,5 +91,5 @@ timeUpdateWorld :: Float -> World -> IO World
 timeUpdateWorld t w = return w
 
 drawWorld :: World -> IO Picture
-drawWorld (p,t) = return $ Scale gScale gScale $ pictures [drawTrack t, drawField (posToField t p m) ]
-  where m = PosGaussian 0.4
+drawWorld (p,t,occ) = return $ Scale gScale gScale $ pictures [drawTrack t, drawNormalizedField occ ]
+

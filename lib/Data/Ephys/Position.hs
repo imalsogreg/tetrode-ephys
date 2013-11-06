@@ -24,7 +24,8 @@ data PosConf = ConfNone | ConfUnsure | ConfSure
              deriving (Eq, Ord, Show)
 
 -- Full 3D position data.  For position relative to a linear track, see TrackPos
-data Position = Position { _location      :: Location
+data Position = Position { _posTime       :: ExperimentTime
+                         , _location     :: Location
                          , _angle         :: Angle
                          , _heading       :: Double
                          , _speed         :: Double
