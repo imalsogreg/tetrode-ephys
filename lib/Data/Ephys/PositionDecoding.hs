@@ -5,7 +5,11 @@ import Data.Ephys.TrackPosition
 
 import qualified Data.Map as Map
 
-estimatePosition :: [PlaceCell]              -- Cells & their plc fields
-                 -> Map.Map PlaceCell Double -- Cells' binned spike counts
+
+estimatePosition :: Map.Map PlaceCell Double -- A map from a place cell (with
+                                             -- its field built only from
+                                             -- spikes occurring before the
+                                             -- start of the reconstruction
+                                             -- timebin
                  -> Field Double             -- Pos PDF
 estimatePosition = undefined

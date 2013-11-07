@@ -77,3 +77,16 @@ Executable watchpos
                   lens,
                   gloss (>=1.8.1.1 && <2),
                   tetrode-ephys 
+
+Executable watchfields
+  Hs-Source-Dirs: samples
+  Main-Is:        watchfields.hs
+  Build-Depends:  base,
+                  containers,
+                  pipes,
+                  lens,
+                  stm,
+                  async,
+                  gloss (>=1.8.1.1 && <2),
+                  bytestring,
+                  tetrode-ephys 

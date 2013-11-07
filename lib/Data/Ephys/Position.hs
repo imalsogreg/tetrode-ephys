@@ -6,6 +6,7 @@ import Data.Ephys.EphysDefs
 
 import Data.Graph
 import Control.Lens
+import Pipes
 import qualified Data.Trees.KdTree as KD
 
 data Location = Location {_x :: Double, _y :: Double, _z :: Double}
@@ -55,6 +56,15 @@ stepPos p t loc ang conf =
         instantSpeed   = locDist (p^.location) loc / dt
         sHist'         = (clipMax 100 instantSpeed) : init (p^.speedHistory)
         speed'         = mean sHist'
+
+producePos :: (Monad m) => Pipe Position Position m r
+producePos = await >>= go
+    where go p0 = do
+            p <- await
+            let p' = stepPos p0 (p^.posTime) (p^.location)
+                     (p^.angle) (p^.posConfidence)
+            yield p'
+            go p'
 
 clipMax :: Double -> Double -> Double
 clipMax m a = if a > m then m else a

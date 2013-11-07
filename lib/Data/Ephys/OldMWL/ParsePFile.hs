@@ -28,10 +28,10 @@ data MWLPos = MWLPos { _mwlPosTime  :: Double
 
 $(makeLenses ''MWLPos)
 
-produceMWLPos :: Double -> Double -> Double -> BSL.ByteString ->
+produceMWLPos :: BSL.ByteString ->
                  Producer MWLPos IO (Either (PBinary.DecodingError,
                                              Producer BS.ByteString IO ()) ())
-produceMWLPos pX0 pY0 pixPerMeter f = 
+produceMWLPos f = 
   PBinary.decodeGetMany parsePRecord (PBS.fromLazy . dropHeaderInFirstChunk $ f) >-> PP.map snd
 
 parsePRecord :: Binary.Get MWLPos
@@ -66,6 +66,7 @@ mwlToArtePos (pX0,pY0) pixelsPerMeter height m p =
   in
   stepPos p (m^.mwlPosTime) loc angle conf
 
+producePosition :: Producer Position
 
 avg2 :: Double -> Double -> Double
 avg2 a b = (a+b)/2
