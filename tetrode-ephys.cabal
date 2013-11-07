@@ -50,6 +50,8 @@ Library
     Data.Ephys.Cluster
     Data.Ephys.Position
     Data.Ephys.TrackPosition
+    Data.Ephys.PlaceCell
+    Data.Ephys.PositionDecoding
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
