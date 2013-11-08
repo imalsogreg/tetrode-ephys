@@ -26,13 +26,15 @@ data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Text
                              }
                   deriving (Show)
 
+toRelTime :: TrodeSpike -> Double
+toRelTime TrodeSpike{..} = spikeTime
+
 instance S.Serialize TrodeSpike where
   put TrodeSpike{..} = do
     S.put (encodeUtf32LE spikeTrodeName)
     S.put spikeTrodeOptsHash
     S.put spikeTime
     S.put spikeWaveforms
---    mapM_ S.put (Prelude.map S.encode spikeWaveforms)
   get = do
     name <- decodeUtf32LE `liftM` S.get
     opts <- S.get
@@ -97,10 +99,3 @@ mySpike = return $ TrodeSpike tName tOpts sTime sWF
         tOpts = 1001
         sTime = 10.10
         sWF = Prelude.take 4 . repeat $ (U.fromList $ [0.0 .. (31.0 :: Voltage)] :: Waveform)
-
-{-
-myTest :: IO ()
-myTest = do
-  s <- mySpike
-  print $ S.runPut (S.put s)
--}
