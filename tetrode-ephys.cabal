@@ -41,7 +41,7 @@ Library
     , cpu
     , hmatrix
     , lens
-    , pipes-rt
+    , pipes-rt (>= 0.4 && < 0.5)
     , KdTree
   Exposed-Modules:
     Data.Ephys
