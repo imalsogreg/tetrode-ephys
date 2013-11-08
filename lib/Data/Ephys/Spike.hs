@@ -15,7 +15,6 @@ import qualified Data.Vector.Unboxed as U
 import Data.Vector.Cereal()
 import Data.Vector.Binary()
 import Data.Ephys.EphysDefs
-import Pipes.RealTime
 
 type Waveform = U.Vector Voltage  -- This should be the waveform from Data.Ephys.Waveform probably?
 
@@ -26,9 +25,6 @@ data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Text
                              , spikeWaveforms      :: [Waveform]
                              }
                   deriving (Show)
-
-instance TMinus TrodeSpike where
-  tMinusSec TrodeSpike{..} = spikeTime
 
 instance S.Serialize TrodeSpike where
   put TrodeSpike{..} = do

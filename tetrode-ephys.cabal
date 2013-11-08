@@ -78,9 +78,9 @@ Executable watchpos
                   gloss (>=1.8.1.1 && <2),
                   tetrode-ephys 
 
-Executable watchfields
+Executable watchfield
   Hs-Source-Dirs: samples
-  Main-Is:        watchfields.hs
+  Main-Is:        watchfield.hs
   Build-Depends:  base,
                   containers,
                   pipes,

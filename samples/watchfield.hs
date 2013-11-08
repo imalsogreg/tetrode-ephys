@@ -17,7 +17,7 @@ import System.Environment
 data World = World { _now       :: Float
                    , _pos       :: TVar Position
                    , _trackPos  :: TVar (Field Double)
-                   , _cells     :: Map.Map String (TVar PlaceCell)
+                   , _placeCell :: TVar PlaceCell
                    , _occupancy :: Field Double
                    } deriving (Eq)
 
