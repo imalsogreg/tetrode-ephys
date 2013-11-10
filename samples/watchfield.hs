@@ -1,12 +1,16 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, OverloadedStrings #-}
 
 module Main where
 
+import Data.Ephys.Spike
 import Data.Ephys.PlaceCell
 import Data.Ephys.Position
 import Data.Ephys.TrackPosition
 import Data.Ephys.Cluster
+import Data.Ephys.OldMWL.Parse
+import Data.Ephys.OldMWL.FileInfo
 import Data.Ephys.OldMWL.ParsePFile
+import Data.Ephys.OldMWL.ParseClusterFile
 
 import Control.Monad
 import qualified Data.Map as Map
@@ -31,11 +35,11 @@ $(makeLenses ''World)
 
 track  = circularTrack (0,0) 0.75 0 0.2 0.25
 
-world0 :: [ClusterMethod] -> IO World
+world0 :: Map.Map Int ClusterMethod -> IO World
 world0 clusters = do
   pos0  <- newTVarIO p0
   tPos0 <- newTVarIO $ posToField track p0 kern
-  cells <- forM clusters (\c -> newTVarIO (PlaceCell c Map.empty))
+  cells <- forM (Map.elems clusters) (\c -> newTVarIO (PlaceCell c Map.empty))
   occ0  <- newTVarIO $ Map.empty
   return $ World 0 pos0 tPos0 cells occ0
   
@@ -61,23 +65,41 @@ streamPFile fn world fileT0 (pX0,pY0) pixPerM h = do
           writeTVar (world^.pos) pos'
           writeTVar (world^.trackPos)  posField
           writeTVar (world^.occupancy) (updateField (+) occ posField))
+  
     
-getSpikesAndClusts :: 
-    
-streamSpikes :: FilePath -> FilePath -> World -> IO ()
-streamSpikes trodeFile clustsFile world = do
-  fSpikes <- BSL.readFile trodeFile
-  eFi     <- getFileInfo trodeFile
-  eClusts <- 
+streamSpikes :: FilePath -> World -> Double -> IO ()
+streamSpikes trodeFile world fileT0 = do
+  fSpikes    <- BSL.readFile trodeFile
+  (Right fi) <- getFileInfo trodeFile
+  runEffect $
+    (dropResult (produceTrodeSpikes "test" fi fSpikes)) >->
+    relativeTimeCatDelayedBy spikeTime fileT0 >->
+    fanoutSpikeToCells world
 
-    
+fanoutSpikeToCells :: World -> Consumer TrodeSpike IO r
+fanoutSpikeToCells w = forever $ do
+  spike <- await
+  posF <- lift (atomically $ readTVar (w^.trackPos))
+  lift $ forM_ (w^.placeCells)
+    (\pc -> incorporateSpike pc posF spike)
+
+incorporateSpike :: TVar PlaceCell -> Field Double -> TrodeSpike -> IO ()
+incorporateSpike cell' posF spike = atomically $ do
+  pc    <- readTVar cell'
+  writeTVar cell' $ stepField pc posF spike
 
 main :: IO ()
 main = do
-  [mwlPFile,mwlTTDir] <- getArgs
-  worldV <- newTVarIO world0
+  [mwlP,mwlTT,mwlClust,tOffset] <- getArgs
+  Right clustMap <- getClusters mwlClust mwlTT
+  world <- world0 clustMap
   
   print "Ok"
-  
+
+{- Got this from OldMWL.Parse
 dropResult ::  (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
 dropResult p = p >>= \_ -> return ()
+-}
+
+usageMessage :: String
+usageMessage = "watchfield pathToMWLp pathToMWLtt pathToMWLbounds startTime"

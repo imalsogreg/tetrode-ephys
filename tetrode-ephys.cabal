@@ -89,4 +89,5 @@ Executable watchfield
                   async,
                   gloss (>=1.8.1.1 && <2),
                   bytestring,
-                  tetrode-ephys 
+                  tetrode-ephys,
+                  pipes-rt
