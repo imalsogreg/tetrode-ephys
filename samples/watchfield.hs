@@ -5,6 +5,7 @@ module Main where
 import Data.Ephys.PlaceCell
 import Data.Ephys.Position
 import Data.Ephys.TrackPosition
+import Data.Ephys.Cluster
 import Data.Ephys.OldMWL.ParsePFile
 
 import Control.Monad
@@ -20,23 +21,23 @@ import Control.Lens
 import Pipes.RealTime
 
 -- Time now, place cells by name, occupancy map
-data World = World { _now       :: Float
-                   , _pos       :: TVar Position
-                   , _trackPos  :: TVar (Field Double)
-                   , _placeCell :: TVar PlaceCell
-                   , _occupancy :: TVar (Field Double)
+data World = World { _now        :: Float
+                   , _pos        :: TVar Position
+                   , _trackPos   :: TVar (Field Double)
+                   , _placeCells :: [TVar PlaceCell]
+                   , _occupancy  :: TVar (Field Double)
                    } deriving (Eq)
 $(makeLenses ''World)
 
 track  = circularTrack (0,0) 0.75 0 0.2 0.25
 
-world0 :: PlaceCell -> IO World
-world0 placeCell0 = do
+world0 :: [ClusterMethod] -> IO World
+world0 clusters = do
   pos0  <- newTVarIO p0
   tPos0 <- newTVarIO $ posToField track p0 kern
-  cell0 <- newTVarIO $ placeCell0
+  cells <- forM clusters (\c -> newTVarIO (PlaceCell c Map.empty))
   occ0  <- newTVarIO $ Map.empty
-  return $ World 0 pos0 tPos0 cell0 occ0
+  return $ World 0 pos0 tPos0 cells occ0
   
 
 kern = PosGaussian 0.2
@@ -44,7 +45,7 @@ occupancy0 = Map.fromList $ zip (allTrackPos track) [0..]
 p0         = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure sZ sZ
   where sZ = take 5 (repeat 0)
 
-streamPFile :: FilePath -> TVar World -> Double -> 
+streamPFile :: FilePath -> World -> Double -> 
                (Double,Double) -> Double -> Double -> IO ()
 streamPFile fn world fileT0 (pX0,pY0) pixPerM h = do
   f <- BSL.readFile fn
@@ -55,15 +56,21 @@ streamPFile fn world fileT0 (pX0,pY0) pixPerM h = do
     (forever $ do
         pos' <- await
         lift . atomically $ do 
-          w   <- readTVar world
-          occ <- readTVar (w^.occupancy)
+          occ <- readTVar (world^.occupancy)
           let posField = posToField track pos' kern
-          writeTVar (w^.pos) pos'
-          writeTVar (w^.trackPos)  posField
-          writeTVar (w^.occupancy) (updateField (+) occ posField))
+          writeTVar (world^.pos) pos'
+          writeTVar (world^.trackPos)  posField
+          writeTVar (world^.occupancy) (updateField (+) occ posField))
     
-          
+getSpikesAndClusts :: 
+    
+streamSpikes :: FilePath -> FilePath -> World -> IO ()
+streamSpikes trodeFile clustsFile world = do
+  fSpikes <- BSL.readFile trodeFile
+  eFi     <- getFileInfo trodeFile
+  eClusts <- 
 
+    
 
 main :: IO ()
 main = do
