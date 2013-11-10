@@ -66,11 +66,22 @@ mwlToArtePos (pX0,pY0) pixelsPerMeter height m p =
   in
   stepPos p (m^.mwlPosTime) loc angle conf
 
-producePosition :: Producer Position
+runningPosition :: (Monad m) => 
+                  (Double,Double) ->
+                  Double ->
+                  Double -> 
+                  Position -> Pipe MWLPos Position m r
+runningPosition (pX0, pY0) pixPerMeter height pInit = 
+  loop pInit
+    where 
+      loop p0 = do
+        mwlP <- await
+        let p = mwlToArtePos (pX0,pY0) pixPerMeter height mwlP p0 :: Position
+        yield p
+        loop p
 
 avg2 :: Double -> Double -> Double
 avg2 a b = (a+b)/2
-
 
 fI :: (Num a, Integral b) => b -> a
 fI = fromIntegral
