@@ -39,7 +39,7 @@ data World = World { _now        :: Float
                    } deriving (Eq)
 $(makeLenses ''World)
 
-track  = circularTrack (0,0) 0.57 0.5 0.25 0.2
+track  = circularTrack (0,0) 0.57 0.5 0.25 0.15
 
 world0 :: Map.Map Int ClusterMethod -> IO World
 world0 clusters = do
@@ -49,7 +49,7 @@ world0 clusters = do
   occ0  <- newTVarIO $ Map.empty
   return $ World 0 pos0 tPos0 cells occ0
 
-kern = PosGaussian 0.2
+kern = PosGaussian 0.1
 occupancy0 = Map.fromList $ zip (allTrackPos track) [0..]
 p0         = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure sZ sZ (-1/0 :: Double) (Location 0 0 0)
   where sZ = take 15 (repeat 0)
