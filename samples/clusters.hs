@@ -8,6 +8,7 @@ import Data.Ephys.OldMWL.Parse
 import Data.Ephys.OldMWL.FileInfo
 import Data.Ephys.OldMWL.ParseClusterFile
 
+import Pipes.RealTime
 import qualified Data.Text as Text
 import qualified Data.ByteString.Lazy as BSL
 import Pipes
@@ -32,8 +33,9 @@ main = do
       Nothing -> error "Couldn't find cluster 1"
       Just cm@(ClustIntersection polys) -> do
         len <- PP.length 
-               (dropResult (produceTrodeSpikes "01" fi tt) >-> 
-                PP.filter (spikeInCluster cm))
+               (dropResult (produceTrodeSpikes "01" fi tt) >->
+                relativeTimeCat spikeTime >->
+                PP.filter (spikeInCluster cm) >-> PP.print)
         --print cm
    {-     let (ClustCartBound b) = head polys
             amps = spikeAmplitudes sTest

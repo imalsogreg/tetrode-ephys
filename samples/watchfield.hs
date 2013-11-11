@@ -2,6 +2,8 @@
 
 module Main where
 
+import RenderRoutines
+
 import Data.Ephys.Spike
 import Data.Ephys.PlaceCell
 import Data.Ephys.Position
@@ -9,7 +11,7 @@ import Data.Ephys.TrackPosition
 import Data.Ephys.Cluster
 import Data.Ephys.OldMWL.Parse
 import Data.Ephys.OldMWL.FileInfo
-import Data.Ephys.OldMWL.ParsePFile
+import Data.Ephys.OldMWL.ParsePFile hiding (fI)
 import Data.Ephys.OldMWL.ParseClusterFile
 
 import Control.Monad
@@ -21,8 +23,12 @@ import System.IO
 import qualified Data.ByteString.Lazy as BSL
 import System.Environment
 import Pipes
+import qualified Pipes.Prelude as PP
 import Control.Lens
 import Pipes.RealTime
+import Control.Concurrent
+import Graphics.Gloss
+import Graphics.Gloss.Interface.IO.Game
 
 -- Time now, place cells by name, occupancy map
 data World = World { _now        :: Float
@@ -33,7 +39,7 @@ data World = World { _now        :: Float
                    } deriving (Eq)
 $(makeLenses ''World)
 
-track  = circularTrack (0,0) 0.75 0 0.2 0.25
+track  = circularTrack (0,0) 0.57 0.5 0.25 0.1
 
 world0 :: Map.Map Int ClusterMethod -> IO World
 world0 clusters = do
@@ -47,7 +53,7 @@ world0 clusters = do
 kern = PosGaussian 0.2
 occupancy0 = Map.fromList $ zip (allTrackPos track) [0..]
 p0         = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure sZ sZ
-  where sZ = take 5 (repeat 0)
+  where sZ = take 15 (repeat 0)
 
 streamPFile :: FilePath -> World -> Double -> 
                (Double,Double) -> Double -> Double -> IO ()
@@ -56,7 +62,7 @@ streamPFile fn world fileT0 (pX0,pY0) pixPerM h = do
   runEffect $
     dropResult (produceMWLPos f) >-> 
     runningPosition (pX0,pY0) pixPerM h p0 >->
-    relativeTimeCatDelayedBy _posTime fileT0 >->
+    relativeTimeCatDelayedBy _posTime fileT0 >-> -- PP.print >->
     (forever $ do
         pos' <- await
         lift . atomically $ do 
@@ -65,15 +71,14 @@ streamPFile fn world fileT0 (pX0,pY0) pixPerM h = do
           writeTVar (world^.pos) pos'
           writeTVar (world^.trackPos)  posField
           writeTVar (world^.occupancy) (updateField (+) occ posField))
-  
-    
+                     
 streamSpikes :: FilePath -> World -> Double -> IO ()
 streamSpikes trodeFile world fileT0 = do
   fSpikes    <- BSL.readFile trodeFile
   (Right fi) <- getFileInfo trodeFile
   runEffect $
     (dropResult (produceTrodeSpikes "test" fi fSpikes)) >->
-    relativeTimeCatDelayedBy spikeTime fileT0 >->
+    relativeTimeCatDelayedBy spikeTime fileT0 >-> --  PP.print >->
     fanoutSpikeToCells world
 
 fanoutSpikeToCells :: World -> Consumer TrodeSpike IO r
@@ -88,18 +93,31 @@ incorporateSpike cell' posF spike = atomically $ do
   pc    <- readTVar cell'
   writeTVar cell' $ stepField pc posF spike
 
+drawWorld :: World -> IO Picture
+drawWorld world = do
+  posF <- readTVarIO (world^.trackPos)
+  p    <- readTVarIO (world^.pos)
+  placeCountFields <- mapM readTVarIO (world^.placeCells)
+  occ <- readTVarIO (world^.occupancy)
+  let placeFields  = map (flip placeField occ) placeCountFields
+      fieldPics    = map drawNormalizedField placeFields
+      fieldsSpaced = [Translate (1.5*(fI i+1)) 0 (pictures [drawTrack track, fieldPics !! i])
+                     | i <- [0..length fieldPics - 1]]
+--  putStrLn $ writePos p
+--  putStrLn $ writeField posF
+  return . Translate (-350) 0 . Scale 100 100 . pictures $ [drawNormalizedField occ, drawPos p] ++ fieldsSpaced
+
 main :: IO ()
 main = do
   [mwlP,mwlTT,mwlClust,tOffset] <- getArgs
   Right clustMap <- getClusters mwlClust mwlTT
   world <- world0 clustMap
-  
+  let tRunStart = -1 * read tOffset
+  _ <- forkIO $ streamPFile mwlP world tRunStart (166,140) 156.6 0.5 -- 166 140
+  _ <- forkIO $ streamSpikes mwlTT world tRunStart
+  playIO (InWindow "My Window" (1000,400) (10,10)) white 30 world drawWorld (\e w -> return w)
+    (\t w -> return w{ _now = _now w + t})
   print "Ok"
-
-{- Got this from OldMWL.Parse
-dropResult ::  (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
-dropResult p = p >>= \_ -> return ()
--}
 
 usageMessage :: String
 usageMessage = "watchfield pathToMWLp pathToMWLtt pathToMWLbounds startTime"

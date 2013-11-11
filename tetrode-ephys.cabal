@@ -11,6 +11,7 @@ Bug-Reports:     http://github.com/ImAlsoGreg/haskell-tetrode-ephys/issues
 Category:        Science
 Build-Type:      Simple
 Synopsis:        Haskell stuff for tetrodes, clusters, and stimuli
+Ghc-Options:     -O2 -threaded -rtsopts -with-rtsopts=-N4
 Cabal-Version:   >=1.8
 Extra-Source-Files: README.md
 Description:
@@ -22,6 +23,7 @@ Source-Repository head
 
 Library
   Hs-Source-Dirs: lib
+  Ghc-Options: -threaded
   Build-Depends:
     base   (>= 4 && <= 5)
     , containers
@@ -66,7 +68,8 @@ Executable clusters
                   pipes,
                   bytestring,
                   text,
-                  tetrode-ephys
+                  tetrode-ephys,
+                  pipes-rt
 
 Executable watchpos
   Hs-Source-Dirs: samples
@@ -81,6 +84,7 @@ Executable watchpos
 Executable watchfield
   Hs-Source-Dirs: samples
   Main-Is:        watchfield.hs
+  Ghc-Options:    -threaded
   Build-Depends:  base,
                   containers,
                   pipes,

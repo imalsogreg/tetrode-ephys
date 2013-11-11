@@ -58,13 +58,13 @@ mwlToArtePos (pX0,pY0) pixelsPerMeter height m p =
       fY = fI $ m^.mwlPyf :: Double
       bX = fI $ m^.mwlPxb :: Double
       bY = fI $ m^.mwlPyb :: Double
-      x = pXToArte $ avg2 fX bX
-      y = pXToArte $ avg2 fY bY
-      loc = Location x y height
-      angle = Angle (atan2 (fY - bY) (fX - bX)) 0 0
+      xArte = pXToArte $ avg2 fX bX
+      yArte = pYToArte $ avg2 fY bY
+      loc = Location xArte yArte height
+      angleArte = Angle (atan2 (fY - bY) (fX - bX)) 0 0
       conf = if all (> 0) [fX,bX,fY,bY] then ConfSure else ConfUnsure
   in
-  stepPos p (m^.mwlPosTime) loc angle conf
+  stepPos p (m^.mwlPosTime) loc angleArte conf
 
 runningPosition :: (Monad m) => 
                   (Double,Double) ->
