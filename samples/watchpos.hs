@@ -29,7 +29,7 @@ main = playIO (InWindow "My Window" (400,400) (10,10))
        drawWorld
        (eventUpdateWorld)
        (timeUpdateWorld)
-  where p0 = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure someZeros someZeros :: Position
+  where p0 = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure someZeros someZeros (-1/0) :: Position
         t0 = myTrack
         f0 = Map.fromList [ (tp,0) | tp <- allTrackPos t0 ]
         someZeros = take 20 . repeat $ 0

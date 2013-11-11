@@ -33,6 +33,7 @@ data Position = Position { _posTime        :: ExperimentTime
                          , _posConfidence  :: PosConf
                          , _headingHistory :: [Double]
                          , _speedHistory   :: [Double]
+                         , _lastGoodTime   :: ExperimentTime
                          }
               deriving (Eq, Ord, Show)
 
@@ -46,16 +47,24 @@ stepPos :: Position
         -> Angle
         -> PosConf
         -> Position
-stepPos p t loc ang conf =
-  Position t loc ang heading' speed' conf hHist' sHist'
-  where dt = t - p^.posTime
-        (dx,dy,_) = locDiff (p^.location) loc
-        instantHeading = atan2 dy dx  --TODO: is this right?
-        hHist'         = instantHeading : init (p^.headingHistory)
-        heading'       = circMean hHist'
-        instantSpeed   = locDist (p^.location) loc / dt
-        sHist'         = (clipMax 100 instantSpeed) : init (p^.speedHistory)
-        speed'         = mean sHist'
+stepPos p0 t loc ang conf =
+  Position t loc ang heading' speed' conf hHist' sHist' lastGoodTime'
+    where dt = t - p0^.posTime
+          supressThis   = conf < ConfSure   || locDist (p0^.location) loc > maxFrameDiff
+          takeEvenIfFar = conf > ConfUnsure && t - (p0^.posTime) > posUnstickTime
+          loc'           = if not supressThis || takeEvenIfFar
+                           then loc
+                           else (p0^.location)
+          lastGoodTime'  = if conf == ConfSure then t else (p0^.lastGoodTime)
+          (dx,dy,_)      = locDiff (p0^.location) loc'
+          instantHeading = atan2 dy dx  --TODO: Yep.
+          hHist'         = instantHeading : init (p0^.headingHistory)
+          heading'       = circMean hHist'
+          instantSpeed   = locDist (p0^.location) loc' / dt
+          sHist'         = (clipMax 100 instantSpeed) : init (p0^.speedHistory)
+          speed'         = mean sHist'
+          posUnstickTime = 1
+          maxFrameDiff   = 0.1
 
 producePos :: (Monad m) => Pipe Position Position m r
 producePos = await >>= go

@@ -39,7 +39,7 @@ data World = World { _now        :: Float
                    } deriving (Eq)
 $(makeLenses ''World)
 
-track  = circularTrack (0,0) 0.57 0.5 0.25 0.1
+track  = circularTrack (0,0) 0.57 0.5 0.25 0.2
 
 world0 :: Map.Map Int ClusterMethod -> IO World
 world0 clusters = do
@@ -48,11 +48,10 @@ world0 clusters = do
   cells <- forM (Map.elems clusters) (\c -> newTVarIO (PlaceCell c Map.empty))
   occ0  <- newTVarIO $ Map.empty
   return $ World 0 pos0 tPos0 cells occ0
-  
 
 kern = PosGaussian 0.2
 occupancy0 = Map.fromList $ zip (allTrackPos track) [0..]
-p0         = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure sZ sZ
+p0         = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure sZ sZ (-1/0 :: Double)
   where sZ = take 15 (repeat 0)
 
 streamPFile :: FilePath -> World -> Double -> 
@@ -101,11 +100,10 @@ drawWorld world = do
   occ <- readTVarIO (world^.occupancy)
   let placeFields  = map (flip placeField occ) placeCountFields
       fieldPics    = map drawNormalizedField placeFields
-      fieldsSpaced = [Translate (1.5*(fI i+1)) 0 (pictures [drawTrack track, fieldPics !! i])
+      fieldsSpaced = [Translate (1.7*(fI i+1)) 0 (pictures [drawTrack track, fieldPics !! i])
                      | i <- [0..length fieldPics - 1]]
---  putStrLn $ writePos p
---  putStrLn $ writeField posF
-  return . Translate (-350) 0 . Scale 100 100 . pictures $ [drawNormalizedField occ, drawPos p] ++ fieldsSpaced
+  return . Translate (-400) 0 . Scale 100 100 . pictures $
+    [drawNormalizedField occ, drawPos p] ++ fieldsSpaced
 
 main :: IO ()
 main = do
@@ -115,9 +113,8 @@ main = do
   let tRunStart = -1 * read tOffset
   _ <- forkIO $ streamPFile mwlP world tRunStart (166,140) 156.6 0.5 -- 166 140
   _ <- forkIO $ streamSpikes mwlTT world tRunStart
-  playIO (InWindow "My Window" (1000,400) (10,10)) white 30 world drawWorld (\e w -> return w)
+  playIO (InWindow "My Window" (1200,400) (10,10)) white 30 world drawWorld (\_ w -> return w)
     (\t w -> return w{ _now = _now w + t})
-  print "Ok"
 
 usageMessage :: String
 usageMessage = "watchfield pathToMWLp pathToMWLtt pathToMWLbounds startTime"
