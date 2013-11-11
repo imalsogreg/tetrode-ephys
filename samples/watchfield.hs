@@ -51,7 +51,7 @@ world0 clusters = do
 
 kern = PosGaussian 0.2
 occupancy0 = Map.fromList $ zip (allTrackPos track) [0..]
-p0         = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure sZ sZ (-1/0 :: Double)
+p0         = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure sZ sZ (-1/0 :: Double) (Location 0 0 0)
   where sZ = take 15 (repeat 0)
 
 streamPFile :: FilePath -> World -> Double -> 
@@ -61,7 +61,7 @@ streamPFile fn world fileT0 (pX0,pY0) pixPerM h = do
   runEffect $
     dropResult (produceMWLPos f) >-> 
     runningPosition (pX0,pY0) pixPerM h p0 >->
-    relativeTimeCatDelayedBy _posTime fileT0 >-> -- PP.print >->
+    relativeTimeCatDelayedBy _posTime fileT0 >-> -- PP.chain (putStrLn . writePos) >-> -- PP.print >->
     (forever $ do
         pos' <- await
         lift . atomically $ do 

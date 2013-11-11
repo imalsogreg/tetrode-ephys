@@ -79,7 +79,8 @@ setAlpha c alpha = case rgbaOfColor c of
   (r,g,b,_) -> makeColor r g b alpha
 
 writePos :: Position -> String
-writePos pos = printf "T: %f  x: %f  y: %f  (Pos)\n" (pos^.posTime)(pos^.location.x)(pos^.location.y)
+writePos pos = printf "Conf: %s  T: %f  x: %f  y: %f  (Pos)\n"
+               (show $ pos^.posConfidence)(pos^.posTime)(pos^.location.x)(pos^.location.y)
 
 writeField :: Field Double -> String
 writeField field =

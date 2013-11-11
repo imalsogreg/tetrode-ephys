@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, BangPatterns #-}
 
 module Data.Ephys.Position where
 
@@ -33,7 +33,9 @@ data Position = Position { _posTime        :: ExperimentTime
                          , _posConfidence  :: PosConf
                          , _headingHistory :: [Double]
                          , _speedHistory   :: [Double]
-                         , _lastGoodTime   :: ExperimentTime
+
+                         , _lastGoodTime   :: !ExperimentTime
+                         , _lastGoodLoc    :: !Location
                          }
               deriving (Eq, Ord, Show)
 
@@ -48,14 +50,20 @@ stepPos :: Position
         -> PosConf
         -> Position
 stepPos p0 t loc ang conf =
-  Position t loc ang heading' speed' conf hHist' sHist' lastGoodTime'
+  Position t loc' ang heading' speed' conf' hHist' sHist' lastGoodTime' lastGoodLoc'
     where dt = t - p0^.posTime
-          supressThis   = conf < ConfSure   || locDist (p0^.location) loc > maxFrameDiff
-          takeEvenIfFar = conf > ConfUnsure && t - (p0^.posTime) > posUnstickTime
-          loc'           = if not supressThis || takeEvenIfFar
+          supressThis   = (conf == ConfNone) || (locDist (p0^.lastGoodLoc) loc > maxFrameDiff)
+          takeEvenIfFar = (conf > ConfNone)  && (t - (p0^.lastGoodTime) > posUnstickTime)
+--          takeEvenIfFar = False
+          loc'           = if (not supressThis) || takeEvenIfFar
                            then loc
-                           else (p0^.location)
-          lastGoodTime'  = if conf == ConfSure then t else (p0^.lastGoodTime)
+                           else (p0^.lastGoodLoc)
+          (lastGoodTime',lastGoodLoc') =
+            if (not supressThis) || takeEvenIfFar
+            then (t,loc')
+            else ((p0^.lastGoodTime),(p0^.lastGoodLoc))
+          conf'          = min conf (if supressThis && (not takeEvenIfFar) then ConfNone else ConfSure)
+
           (dx,dy,_)      = locDiff (p0^.location) loc'
           instantHeading = atan2 dy dx  --TODO: Yep.
           hHist'         = instantHeading : init (p0^.headingHistory)
