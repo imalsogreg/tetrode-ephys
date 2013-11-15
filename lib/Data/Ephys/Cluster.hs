@@ -1,10 +1,12 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, DeriveGeneric #-}
 
 module Data.Ephys.Cluster where
 
 import Data.Ephys.Spike
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
+import Data.Serialize
+import GHC.Generics (Generic)
 
 import Control.Lens
 
@@ -15,19 +17,25 @@ data CartBound = CartBound { _cartXChan :: ChanInd
                            , _cartYChan :: ChanInd
                            , _cartPolygon :: Polygon
                            }
-                      deriving (Eq, Show)
+                      deriving (Eq, Show,Generic)
 
 $(makeLenses ''CartBound)
 
+instance Serialize CartBound where
+
 data PolarBound = PolarBound -- Placeholder
-                  deriving (Eq, Show)
-                  
+                  deriving (Eq, Show, Generic)
+
+instance Serialize PolarBound where
+                           
 data ClusterMethod = ClustCartBound     CartBound
                    | ClustPolarBound    PolarBound
                    | ClustSoftCartesian 
                    | ClustIntersection [ClusterMethod]
                    | ClustUnion [ClusterMethod]
-                   deriving (Eq, Show)
+                   deriving (Eq, Show,Generic)
+
+instance Serialize ClusterMethod where
 
 spikeInCluster :: ClusterMethod -> TrodeSpike -> Bool
 spikeInCluster (ClustCartBound cb) s =
