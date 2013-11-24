@@ -2,7 +2,7 @@
 
 module Main where
 
-import RenderRoutines
+import Data.Ephys.GlossPictures
 
 import Data.Ephys.OldMWL.ParsePFile
 import Data.Ephys.Position

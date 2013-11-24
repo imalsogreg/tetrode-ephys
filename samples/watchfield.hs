@@ -2,7 +2,7 @@
 
 module Main where
 
-import RenderRoutines
+import Data.Ephys.GlossPictures
 
 import Data.Ephys.Spike
 import Data.Ephys.PlaceCell
@@ -11,7 +11,7 @@ import Data.Ephys.TrackPosition
 import Data.Ephys.Cluster
 import Data.Ephys.OldMWL.Parse
 import Data.Ephys.OldMWL.FileInfo
-import Data.Ephys.OldMWL.ParsePFile hiding (fI)
+import Data.Ephys.OldMWL.ParsePFile
 import Data.Ephys.OldMWL.ParseClusterFile
 
 import Control.Monad

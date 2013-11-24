@@ -1,6 +1,6 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-module RenderRoutines where
+module Data.Ephys.GlossPictures where
 
 import Data.Ephys.Position
 import Data.Ephys.TrackPosition
@@ -13,7 +13,7 @@ import Control.Lens
 import Text.Printf
 
 rad2Deg = (* (-180 / pi))
-fI = fromIntegral
+
 r2 = realToFrac
 
 trackPosPicture :: TrackPos -> Picture
@@ -92,6 +92,3 @@ writeField field =
     tY = modePos^.trackBin.binLoc.y
     tD = show $ modePos^.trackDir
     headP = snd . List.head . Map.toList $ field
-
-writeSpike :: TrodeSpike -> String
-writeSpike = show . spikeTime

@@ -44,6 +44,7 @@ Library
     , lens
     , pipes-rt (>= 0.4 && < 0.5)
     , KdTree
+    , gloss
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
@@ -58,6 +59,7 @@ Library
     Data.Ephys.OldMWL.ParseClusterFile
     Data.Ephys.OldMWL.ParsePFile
     Data.Ephys.TimeSignal.Filter
+    Data.Ephys.GlossPictures
 
 Executable clusters
   Hs-Source-Dirs: samples

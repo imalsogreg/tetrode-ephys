@@ -15,6 +15,10 @@ data PlaceCell = PlaceCell { _cluster    :: ClusterMethod
 
 $(makeLenses ''PlaceCell)
 
+
+--TODO: Should this function test that spike is in cluster?
+-- Or should the caller do that?
+-- (called by: ArteDecode.hs, watchfields)
 stepField :: PlaceCell -> Field Double -> TrodeSpike -> PlaceCell
 stepField cell currentPos spike =
   case spikeInCluster (cell^.cluster) spike of

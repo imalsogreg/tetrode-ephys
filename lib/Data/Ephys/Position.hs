@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, BangPatterns #-}
+{-# LANGUAGE TemplateHaskell, BangPatterns, DeriveGeneric #-}
 
 module Data.Ephys.Position where
 
@@ -7,22 +7,18 @@ import Data.Ephys.EphysDefs
 import Data.Graph
 import Control.Lens
 import Pipes
+import Data.Serialize
+import GHC.Generics
 import qualified Data.Trees.KdTree as KD
 
 data Location = Location {_x :: Double, _y :: Double, _z :: Double}
-              deriving (Eq, Ord, Show)
+              deriving (Eq, Ord, Show, Generic)
 
 data Angle = Angle {_yaw :: Double, _pitch :: Double, _roll :: Double}
-           deriving (Eq, Ord, Show)
-{-
-data Heading = Heading { _theta :: Double}
-               deriving (Eq, Show)
+           deriving (Eq, Ord, Show, Generic)
 
-data Speed = Speed { _mps :: Double }
-           deriving (Eq, Show)
--}
 data PosConf = ConfNone | ConfUnsure | ConfSure
-             deriving (Eq, Ord, Show)
+             deriving (Eq, Ord, Show, Generic)
 
 -- Full 3D position data.  For position relative to a linear track, see TrackPos
 data Position = Position { _posTime        :: ExperimentTime
@@ -37,7 +33,12 @@ data Position = Position { _posTime        :: ExperimentTime
                          , _lastGoodTime   :: !ExperimentTime
                          , _lastGoodLoc    :: !Location
                          }
-              deriving (Eq, Ord, Show)
+              deriving (Eq, Ord, Show, Generic)
+
+instance Serialize Location
+instance Serialize Angle
+instance Serialize PosConf
+instance Serialize Position
 
 $(makeLenses ''Location)
 $(makeLenses ''Angle)
