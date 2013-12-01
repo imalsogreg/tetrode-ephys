@@ -3,7 +3,6 @@
 module Data.Ephys.PlaceCell where
 
 import Data.Ephys.Spike
-import Data.Ephys.Position
 import Data.Ephys.TrackPosition
 import Data.Ephys.Cluster
 
