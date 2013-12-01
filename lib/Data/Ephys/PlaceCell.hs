@@ -11,7 +11,7 @@ import Control.Lens
 
 data PlaceCell = PlaceCell { _cluster    :: ClusterMethod
                            , _countField :: Field Double
-                           }
+                           } deriving (Eq, Show)
 
 $(makeLenses ''PlaceCell)
 
