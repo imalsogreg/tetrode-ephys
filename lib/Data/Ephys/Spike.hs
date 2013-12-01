@@ -24,7 +24,7 @@ data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Text
                              , spikeTime           :: ExperimentTime
                              , spikeWaveforms      :: [Waveform]
                              }
-                  deriving (Show)
+                  deriving (Eq, Show)
 
 toRelTime :: TrodeSpike -> Double
 toRelTime TrodeSpike{..} = spikeTime
