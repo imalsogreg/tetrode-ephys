@@ -26,6 +26,7 @@ Library
   Build-Depends:
     base   (>= 4 && <= 5)
     , containers
+    , directory
     , cereal
     , vector
     , vector-binary-instances
@@ -96,3 +97,13 @@ Executable watchfield
                   bytestring,
                   tetrode-ephys,
                   pipes-rt
+
+Executable mwlfileutil
+  Hs-Source-Dirs: samples
+  Main-Is:        mwlfileutils.hs
+  Ghc-Options:    -threaded
+  Build-Depends:  base,
+                  pipes,
+                  lens,
+                  async,
+                  tetrode-ephys
