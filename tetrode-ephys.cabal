@@ -55,6 +55,7 @@ Library
     Data.Ephys.TrackPosition
     Data.Ephys.PlaceCell
     Data.Ephys.PositionDecoding
+    Data.Ephys.OldMWL.Header
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
@@ -99,7 +100,7 @@ Executable watchfield
                   pipes-rt
 
 Executable mwlfileutil
-  Hs-Source-Dirs: samples
+  Hs-Source-Dirs: utils
   Main-Is:        mwlfileutils.hs
   Ghc-Options:    -threaded
   Build-Depends:  base,

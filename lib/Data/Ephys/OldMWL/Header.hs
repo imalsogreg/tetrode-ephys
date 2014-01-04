@@ -49,7 +49,8 @@ parseOutro = string "%%ENDHEADER\n"
 
 parseLine :: Parser (Maybe (BS.ByteString,BS.ByteString))
 parseLine = char '%' *> 
-            (try (char ' ' *> parsePair) 
+            (try (char ' ' *> parsePair)
+             <|> parseBadXYDATALine
              <|> (char ' ' *> parseInfoLine) 
              <|> try parseBlank ) 
             <* char '\n'
@@ -59,6 +60,11 @@ parseBlank = pure Nothing
 
 parseInfoLine :: Parser (Maybe (BS.ByteString,BS.ByteString))
 parseInfoLine = many1 (noneOf "\n") *> pure Nothing
+
+parseBadXYDATALine :: Parser (Maybe (BS.ByteString,BS.ByteString))
+parseBadXYDATALine = string "%XYDATAFILE" *>
+                     many (noneOf "\n") *>
+                     pure Nothing
 
 parsePair :: Parser (Maybe (BS.ByteString,BS.ByteString))
 parsePair = Just <$> ((,) <$> keyToken <*> valueToken)
