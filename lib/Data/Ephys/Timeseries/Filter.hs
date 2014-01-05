@@ -1,6 +1,4 @@
-module Data.Ephys.TimeSignal.Filter where
-
-import Data.Hashable (Hashable(..))
+module Data.Ephys.Timeseries.Filter where
 
 -- Order of constructor arguments supposed to match natural
 -- language for specifying filters, e.g. "4th order Lowpass Eliptical filter"
@@ -14,21 +12,10 @@ data Response = LowPass  Double
               | Notch    Double
               deriving (Eq, Show)
 
-instance Hashable Response where
-  hashWithSalt salt a  = hashWithSalt salt (show a) 
-
-
 data Sharpness = Order Integer
                | PassStopRipple Double Double
                deriving (Eq, Show)
 
-instance Hashable Sharpness where
- hashWithSalt salt s = hashWithSalt salt (show s)
-
-
 data Family = Butterworth
             | Elliptic
             deriving (Eq, Show)
-
-instance Hashable Family where
-  hashWithSalt salt f = hashWithSalt salt (show f) 

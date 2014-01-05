@@ -27,7 +27,7 @@ Library
     base   (>= 4 && <= 5)
     , containers
     , cereal
-    , vector
+    , vector (>= 0.10 && < 0.10.1)
     , vector-binary-instances
     , text
     , time
@@ -58,7 +58,7 @@ Library
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
     Data.Ephys.OldMWL.ParsePFile
-    Data.Ephys.TimeSignal.Filter
+    Data.Ephys.Timeseries
     Data.Ephys.GlossPictures
 
 Executable clusters
