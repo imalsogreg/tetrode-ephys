@@ -1,4 +1,6 @@
-{-# LANGUAGE RecordWildCards, OverloadedStrings, NoMonomorphismRestriction #-}
+{-# LANGUAGE RecordWildCards #-} 
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Data.Ephys.OldMWL.Parse where
 
@@ -54,6 +56,9 @@ mwlUnitsToVoltage gain inV = inV * cVG/bMWL + (zMWL / bMWL)
   where bMWL= 2^(13::Int) - 1
         zMWL = -1/2^(15::Int)
         cVG  = 10 / gain
+
+voltageToMwlUnits :: Double -> Double -> Double
+voltageToMwlUnits gain inV = inV / (mwlUnitsToVoltage gain 1.0)
     
 -- Assuming the Int16 is signed
 wordToMWLDouble :: Word16 -> Double
@@ -97,7 +102,6 @@ parseSpike fi@FileInfo{..}
       return $ MWLSpike (decodeTime ts) vsUVecs
   | otherwise    = error "Failed okFileInfo test"
 
-
 produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceMWLSpikes fi b = let myGet = parseSpike fi in
   PBinary.decodeGetMany myGet (PBS.fromLazy . dropHeaderInFirstChunk $ b) >-> PP.map snd
@@ -105,6 +109,7 @@ produceMWLSpikes fi b = let myGet = parseSpike fi in
 produceTrodeSpikes :: T.Text -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceTrodeSpikes tName fi b = produceMWLSpikes fi b >-> PP.map (mwlToArteSpike fi tName)
 
+-- TODO: This is misplaced.  Need something like "general utils."
 dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
 dropResult p = p >>= \_ -> return ()
 
@@ -126,21 +131,3 @@ mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
         tWaveforms = Prelude.zipWith
                      (\g -> U.map (mwlUnitsToVoltage g)) gains (mwlSpikeWaveforms s)
         tOpts = 1001 -- TODO: Get trodeopts
-
-{-
-myTest :: IO ()
-myTest = do
-  f <- BSL.readFile "/home/greghale/Desktop/test.tt"
-  fi <- getFileInfo "/home/greghale/Desktop/test.tt"
-  runEffect $ dropResult (produceMWLSpikes fi f)  >-> catSpike' >-> PP.take 50 >->  PP.print
-  --n <- ( PP.length $ dropResult (produceMWLSpikes' fi (dropHeaderInFirstChunk f)))
-  --print n
-  print ("Ok" :: String)
-
-
-testFile :: IO BSL.ByteString
-testFile = BSL.readFile "/home/greghale/Desktop/test.tt"
-
-testFileInfo :: IO FileInfo
-testFileInfo = getFileInfo "/home/greghale/Desktop/test.tt"
--}
