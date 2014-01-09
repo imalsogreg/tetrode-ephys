@@ -46,6 +46,7 @@ Library
     , pipes-rt (>= 0.4 && < 0.5)
     , KdTree
     , gloss
+    , safe
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
