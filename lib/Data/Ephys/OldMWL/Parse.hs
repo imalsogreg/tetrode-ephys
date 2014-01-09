@@ -38,6 +38,9 @@ writeSpike (MWLSpike tSpike waveforms) = do put tSpike
 decodeTime :: Word32 -> Double
 decodeTime = (/ 10000) . fromIntegral
 
+encodeTime :: Double -> Word32
+encodeTime = floor . (* 10000)
+
 fromBE16 :: Word16 -> Word16
 fromBE16 x = (x `shiftL` 8) .|. (x `shiftR` 8)
 

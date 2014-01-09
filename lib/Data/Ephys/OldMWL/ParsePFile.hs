@@ -4,7 +4,7 @@ module Data.Ephys.OldMWL.ParsePFile where
 
 import Data.Ephys.Position
 import Data.Ephys.OldMWL.FileInfo
-import Data.Ephys.OldMWL.Parse (decodeTime, dropResult)
+import Data.Ephys.OldMWL.Parse (decodeTime, encodeTime, dropResult)
 
 import Control.Applicative
 import Control.Lens
@@ -16,6 +16,7 @@ import GHC.Int
 import Pipes
 import qualified Pipes.Prelude as PP
 import qualified Data.Binary as Binary
+import Data.Binary.Put
 import Data.Binary.Get (getWord32le, getWord16le)
 
 data MWLPos = MWLPos { _mwlPosTime  :: Double
@@ -45,10 +46,12 @@ parsePRecord = do
 
 instance Binary.Binary MWLPos where
   get = parsePRecord
-  put (MWLPos t xf yf xb yb) = 
-    Binary.put t *> Binary.put xf
-    *> Binary.put yf *> Binary.put xb
-    *> Binary.put yb
+  put (MWLPos t xf yf xb yb) = do
+    putWord32le $ encodeTime t
+    putWord16le $ fromIntegral xf
+    putWord16le $ fromIntegral yf
+    putWord16le $ fromIntegral xb
+    putWord16le $ fromIntegral yb
 
 mwlToArtePos :: (Double,Double)
              -> Double

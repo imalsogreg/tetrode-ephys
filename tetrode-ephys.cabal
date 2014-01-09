@@ -112,3 +112,15 @@ Executable mwlfileutil
                   lens,
                   async,
                   tetrode-ephys
+
+Executable posCutHead
+  Hs-Source-Dirs: utils
+  Main-Is:        posCutHead.hs
+  Build-Depends:  base,
+                  safe,
+                  bytestring,
+                  pipes,
+                  pipes-bytestring,
+                  pipes-binary,
+                  lens,
+                  tetrode-ephys
