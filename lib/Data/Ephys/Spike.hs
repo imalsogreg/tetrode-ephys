@@ -2,7 +2,7 @@
 
 module Data.Ephys.Spike where
 
-import Data.Ephys.TimeSignal.Filter
+import Data.Ephys.Timeseries.Filter
 
 import Data.Text hiding (zip, map,foldl1')
 import Data.Text.Encoding
@@ -92,7 +92,7 @@ data TrodeAcquisitionOpts = TrodeAcquisitionOpts { spikeFilterSpec :: FilterSpec
                                                  , spikeThresholds :: [Voltage]
                                                  } deriving (Eq, Show)
 
-
+-- TODO: a test spike
 mySpike :: IO TrodeSpike
 mySpike = return $ TrodeSpike tName tOpts sTime sWF
   where tName = pack "TestSpikeTrode"

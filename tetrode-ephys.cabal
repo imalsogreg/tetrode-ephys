@@ -54,11 +54,12 @@ Library
     Data.Ephys.TrackPosition
     Data.Ephys.PlaceCell
     Data.Ephys.PositionDecoding
+    Data.Ephys.Timeseries
+    Data.Ephys.Timeseries.Filter
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
     Data.Ephys.OldMWL.ParsePFile
-    Data.Ephys.Timeseries
     Data.Ephys.GlossPictures
 
 Executable clusters
@@ -92,6 +93,7 @@ Executable watchfield
                   lens,
                   stm,
                   async,
+                  safe,
                   gloss (>=1.8.1.1 && <2),
                   bytestring,
                   tetrode-ephys,

@@ -15,25 +15,31 @@ data PaddingRule = PaddingClip | PaddingZero
 data ShiftRule   = ShiftInterp | ShiftNearest | ShiftMostRecent
                  deriving (Eq, Show, Generic)
 
-samplingRate :: Timeseries a -> Int
-samplingRate (Timeseries (tStart,tEnd) d) =
-  length (tEnd - tStart)
+samplingRate :: Timeseries a -> Maybe Int
+samplingRate ts =
+  length (ts^.tDtata) (ts^.tEnd - ts^.tStart)
 
 inInterval :: Double -> Timeseries a -> Bool
-inInterval t ts = t < ts^.tsInterval.fst || t > ts.tsInterval.snd
+inInterval t ts = t < ts^.tsTStart || t > ts.tsTEnd
 
-tsIndInt :: Timeseries a -> Double -> Maybe Int
-tsIndInt ts t
+tsLength :: Timeseries a -> Double
+tsLength ts = ts^.tsInterval.snd - ts^.tsInterval-fst
+
+tsTIndInt :: Timeseries a -> Double -> Maybe Int
+tsTIndInt ts t
   | not (inInterval t ts) = Nothing
-  | otherwise = floor $ (t - ts^.tsInterval.fst)/
+  | otherwise = floor $ (t - ts^.tsTStart)/(intervalLength ts)
 
-sample :: (Real a) => PaddingRule
-       -> ShiftRule
-       -> Double
-       -> Timeseries a
-       -> a
+tsIndT :: Timeseries a -> Int -> Double
+tsIndT ts i = ts^.tStart + fromIntegral i / samplingRate ts
+
+sample :: (Real a) => ShiftRule
+          -> Double
+          -> Timeseries a
+          -> a
 sample padR shiftR t ts
-  | not (inInterval t ts) && padR == PaddingZero = 0
+  | not (inInterval t ts) = 0
+  | otherwise = undefined
 
 subWindow :: (Real a) =>
              PaddingRule ->

@@ -10,8 +10,9 @@ import Data.Text
 import GHC.Generics
 
 -- |A timeseries has a 
-data Timeseries a = Timeseries { _tsInterval :: (Double,Double)
-                               , _tsData     :: Map Text (Vector a)
+data Timeseries a = Timeseries { _tStart :: Double
+                               , _tEnd   :: Double
+                               , _tsData   :: Map Text (Vector a)
                                }
                   deriving (Eq, Generic)
 
