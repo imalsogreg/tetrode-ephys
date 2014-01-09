@@ -4,6 +4,7 @@ module Main where
 
 import Data.Ephys.OldMWL.ParsePFile
 import Data.Ephys.OldMWL.Header
+import Data.Ephys.OldMWL.FileInfo
 
 import System.IO
 import System.Environment
@@ -23,21 +24,25 @@ main = do
     Just (inName,outName,tStart) -> loadRawMWL inName >>= \r -> case r of
       Left e -> putStrLn $ "Parse error for " ++ outName ++ " : " ++ e
       Right (_,remaining) -> do
-        inFileB <- BSL.readFile inName
-        withFile outName WriteMode $ \outFileH -> do
-          let headerSize = BSL.length inFileB - BSL.length remaining
-          BSL.hPutStr outFileH $ BSL.take headerSize inFileB
-          _ <- P.runEffect $ P.for source
-               (P.liftIO . BSL.hPutStr outFileH)
-          return ()
-            where
-              p pos = pos^.mwlPosTime >= tStart
-              source =
-                P.decodeMany (P.fromLazy remaining) >->
-                  P.map snd >->
-                  P.filter p >->
-                  P.for P.cat P.encode >->
-                  P.map BSL.fromStrict
+        fi' <- getFileInfo inName
+        case fi' of
+          Left e -> putStrLn $ "Error opening file " ++ inName ++ " : " ++ e
+          Right fi -> do
+            inFileB <- BSL.readFile inName
+            withFile outName WriteMode $ \outFileH -> do
+              let headerSize = BSL.length inFileB - BSL.length remaining
+              BSL.hPutStr outFileH $ BSL.take headerSize inFileB
+              _ <- P.runEffect $ P.for source
+                   (P.liftIO . BSL.hPutStr outFileH)
+              return ()
+                where
+                  p pos = pos^.mwlPosTime >= tStart
+                  source =
+                    P.decodeMany (P.fromLazy remaining) >->
+                    P.map snd >->
+                    P.filter p >->
+                    P.for P.cat P.encode >->
+                    P.map BSL.fromStrict
     Nothing -> printUsage
 
 validateArgs :: [String] -> Maybe (FilePath,FilePath, Double)
@@ -47,3 +52,12 @@ validateArgs _ = Nothing
     
 printUsage :: IO ()
 printUsage = putStrLn "posCutHead inFilename outFilename tStart"
+
+type TimeFun = FileInfo -> BSL.ByteString -> Double
+
+fileTypeFuncs :: FileName -> Maybe TimeFun
+fileTypeFuncs fn =
+  let ext = reverse . takeWhile (/= '.') . reverse
+  in case ext fn of
+    "tt" -> 
+  
