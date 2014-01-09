@@ -53,11 +53,21 @@ validateArgs _ = Nothing
 printUsage :: IO ()
 printUsage = putStrLn "posCutHead inFilename outFilename tStart"
 
-type TimeFun = FileInfo -> BSL.ByteString -> Double
+class HasTime a where
+  timeOf :: a -> Double
 
-fileTypeFuncs :: FileName -> Maybe TimeFun
+instance HasTime MWLPos where
+  timeOf pos = pos ^.mwlPosTime
+
+instance HasTime 
+
+type TimeFun = FileInfo -> BSL.ByteString -> Double
+type GetFun  = FileInfo -> Get
+
+fileTypeFuncs :: FileName -> Maybe (GetFun,TimeFun)
 fileTypeFuncs fn =
   let ext = reverse . takeWhile (/= '.') . reverse
   in case ext fn of
-    "tt" -> 
+    "p"  -> Just (const get)
+    "tt" -> Just (\fi -> 
   
