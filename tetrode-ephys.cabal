@@ -26,6 +26,7 @@ Library
   Build-Depends:
     base   (>= 4 && <= 5)
     , containers
+    , directory
     , cereal
     , vector (>= 0.10 && < 0.10.1)
     , vector-binary-instances
@@ -45,6 +46,7 @@ Library
     , pipes-rt (>= 0.4 && < 0.5)
     , KdTree
     , gloss
+    , safe
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
@@ -56,11 +58,13 @@ Library
     Data.Ephys.PositionDecoding
     Data.Ephys.Timeseries
     Data.Ephys.Timeseries.Filter
+    Data.Ephys.GlossPictures
+    Data.Ephys.OldMWL.Header
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
     Data.Ephys.OldMWL.ParsePFile
-    Data.Ephys.GlossPictures
+
 
 Executable clusters
   Hs-Source-Dirs: samples
@@ -98,3 +102,13 @@ Executable watchfield
                   bytestring,
                   tetrode-ephys,
                   pipes-rt
+
+Executable mwlfileutil
+  Hs-Source-Dirs: utils
+  Main-Is:        mwlfileutils.hs
+  Ghc-Options:    -threaded
+  Build-Depends:  base,
+                  pipes,
+                  lens,
+                  async,
+                  tetrode-ephys

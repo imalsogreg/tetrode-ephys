@@ -6,6 +6,7 @@ import Data.Ephys.Position
 import Data.Ephys.OldMWL.FileInfo
 import Data.Ephys.OldMWL.Parse (decodeTime, dropResult)
 
+import Control.Applicative
 import Control.Lens
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString as BS
@@ -16,8 +17,6 @@ import Pipes
 import qualified Pipes.Prelude as PP
 import qualified Data.Binary as Binary
 import Data.Binary.Get (getWord32le, getWord16le)
-
-
 
 data MWLPos = MWLPos { _mwlPosTime  :: Double
                      , _mwlPxf      :: Int
@@ -44,6 +43,13 @@ parsePRecord = do
     return $ MWLPos (decodeTime recTs)
       (fI recXf) (fI recYf) (fI recXb) (fI recYb)
 
+instance Binary.Binary MWLPos where
+  get = parsePRecord
+  put (MWLPos t xf yf xb yb) = 
+    Binary.put t *> Binary.put xf
+    *> Binary.put yf *> Binary.put xb
+    *> Binary.put yb
+
 mwlToArtePos :: (Double,Double)
              -> Double
              -> Double
@@ -52,8 +58,8 @@ mwlToArtePos :: (Double,Double)
              -> Position
 mwlToArtePos (pX0,pY0) pixelsPerMeter height m p =
   let s = 1/pixelsPerMeter
-      pXToArte = (*s) . (subtract pX0)
-      pYToArte = (*s) . (subtract pY0)
+      pXToArte = (*s) . subtract pX0
+      pYToArte = (*s) . subtract pY0
       fX = fI $ m^.mwlPxf :: Double
       fY = fI $ m^.mwlPyf :: Double
       bX = fI $ m^.mwlPxb :: Double
@@ -71,8 +77,8 @@ runningPosition :: (Monad m) =>
                   Double ->
                   Double -> 
                   Position -> Pipe MWLPos Position m r
-runningPosition (pX0, pY0) pixPerMeter height pInit = 
-  loop pInit
+runningPosition (pX0, pY0) pixPerMeter height = 
+  loop
     where 
       loop p0 = do
         mwlP <- await
