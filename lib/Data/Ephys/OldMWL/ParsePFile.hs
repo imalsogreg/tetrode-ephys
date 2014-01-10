@@ -94,3 +94,9 @@ avg2 a b = (a+b)/2
 
 fI :: (Num a, Integral b) => b -> a
 fI = fromIntegral
+
+catPos :: Monad m => Pipe MWLPos MWLPos m r
+catPos = do
+  p <- await
+  yield p
+  catPos

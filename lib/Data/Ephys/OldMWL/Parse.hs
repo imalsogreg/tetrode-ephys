@@ -9,9 +9,6 @@ import Data.Maybe (listToMaybe)
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed hiding (map, forM_, any, replicateM,
-                                   zipWith, drop, take, head,
-                                   filter, (++), all, toList)
 import GHC.Int
 import Pipes
 import qualified Pipes.Prelude as PP
@@ -21,7 +18,6 @@ import qualified Pipes.Binary as PBinary hiding (Get)
 import Data.Binary.Get (getWord32le, getWord16le)
 import qualified Pipes.ByteString as PBS 
 import qualified Data.Text as T
-import Data.Bits (shiftL, shiftR, (.|.))
 import Data.Packed.Matrix
 import qualified Data.List as List
 import Data.Packed.Vector (Vector, toList)
@@ -34,26 +30,21 @@ data MWLSpike = MWLSpike { mwlSpikeTime      :: Double
                          } deriving (Eq, Show)
 
 
-writeSpike :: MWLSpike -> Put
-writeSpike (MWLSpike tSpike waveforms) = do
+writeSpike :: FileInfo -> MWLSpike -> Put
+writeSpike fi (MWLSpike tSpike waveforms) = do
   putWord32le $ encodeTime tSpike
-  let vs = List.concat . List.transpose . map U.toList $ waveforms
+  let spikeMwlUnits = List.zipWith (\g ms -> U.map (voltageToMwlUnits g) ms)
+                      (fileGains fi)
+                      waveforms
+      vs = List.concat . List.transpose . map U.toList $ spikeMwlUnits
   forM_ vs $ 
-    putWord16le . int16toWord16 . voltageToMwlUnits
-{-
-forM_ waveforms $ \waveform ->
-                                              forM_ (U.toList waveform) put
--}
+    putWord16le . int16toWord16 . floor 
+
 decodeTime :: Word32 -> Double
 decodeTime = (/ 10000) . fromIntegral
 
 encodeTime :: Double -> Word32
 encodeTime = floor . (* 10000)
-
-{- Unused!
-fromBE16 :: Word16 -> Word16
-fromBE16 x = (x `shiftL` 8) .|. (x `shiftR` 8)
--}
 
 -- 'cast'int word to int, right?
 word16ToInt16 :: Word16 -> Int16
@@ -61,7 +52,7 @@ word16ToInt16 x = fromIntegral x - ( (fromIntegral (maxBound :: Word16)) `div` 2
 
 -- TODO Is this right?
 int16toWord16 :: Int16 -> Word16
-int16toWord16 x = fromIntegral x
+int16toWord16 x = fromIntegral x - fromIntegral (maxBound :: Word16)
 
 -- MWL units go as -2^13 -> (2^13-1)  => -10V -> 10V
 mwlUnitsToVoltage :: Double -> Double -> Double
