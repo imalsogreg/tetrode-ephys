@@ -119,6 +119,7 @@ Executable posCutHead
   Build-Depends:  base,
                   safe,
                   bytestring,
+                  binary,
                   pipes,
                   pipes-bytestring,
                   pipes-binary,
