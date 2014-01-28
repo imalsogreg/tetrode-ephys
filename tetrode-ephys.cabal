@@ -28,7 +28,7 @@ Library
     , containers
     , directory
     , cereal
-    , vector (>= 0.10 && < 0.10.1)
+    , vector (>= 0.10 && < 0.10.10)
     , vector-binary-instances
     , text
     , time
@@ -93,7 +93,7 @@ Executable watchfield
   Ghc-Options:    -threaded
   Build-Depends:  base,
                   containers,
-                  pipes,
+                  pipes (>= 4.0 && < 4.1),
                   lens,
                   stm,
                   async,
@@ -123,4 +123,5 @@ Executable posCutHead
                   pipes-bytestring,
                   pipes-binary,
                   lens,
+                  binary,
                   tetrode-ephys
