@@ -28,7 +28,7 @@ Library
     , containers
     , directory
     , cereal
-    , vector (>= 0.10 && < 0.10.1)
+    , vector
     , vector-binary-instances
     , text
     , time
