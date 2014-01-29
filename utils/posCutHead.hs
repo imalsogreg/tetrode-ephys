@@ -22,6 +22,10 @@ import qualified Pipes.Binary     as P
 import Safe
 import Control.Lens
 
+data DropCmd = DropCmd
+               {
+                 ,newParamsIds :: Bool }
+
 main :: IO ()
 main = do
   args <- getArgs
