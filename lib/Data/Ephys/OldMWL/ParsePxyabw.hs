@@ -25,8 +25,6 @@ import qualified Data.Text as T
 import Data.Packed.Matrix
 import qualified Data.List as List
 import Data.Packed.Vector (Vector, toList)
-import qualified Foreign.C.Types as C
-import qualified Data.Typeable as Typeable
 import Control.Applicative
 import Data.Binary.IEEE754
 
@@ -54,7 +52,6 @@ parsePxyabw = MWLSpikeParms
               <*> getWord16le
               <*> getWord16le
               <*> (wordToDouble <$> getWord64le)
---              <*> get
               <*> getWord16le
               <*> getWord16le
               <*> getWord32le
@@ -69,69 +66,7 @@ writeSpikeParms MWLSpikeParms{..} = do
   putWord16le $ mwlSParmsTMaxW
   putWord16le $ mwlSParmsTMaxH
   putWord64le $ doubleToWord mwlSParmsTime
---  put $ mwlSParmsTime
   putWord16le $ mwlSParmsPosX
   putWord16le $ mwlSParmsPosY
   putWord32le    $ mwlSParmsVel
-              
-              
-
-{- Gonna try again, converting only the time field
--- This is specific to the way I typically unpack .tt data
--- It's also keeping everything in the original hyper-simple-to-decode form
--- because I'm only using it as a way of filtering down a .pxyabw file for now
-data MWLSpikeParms = MWLSpikeParms { mwlSParmsID    :: Int32
-                                   , mwlSParmsTpX   :: Int16 -- Voltage (TODO fixme)
-                                   , mwlSParmsTpY   :: Int16
-                                   , mwlSParmsTpA   :: Int16
-                                   , mwlSParmsTpB   :: Int16
-                                   , mwlSParmsTMaxW :: Int16
-                                   , mwlSParmsTMaxH :: Int16
-                                   , mwlSParmsTime  :: Double
-                                   , mwlSParmsPosX  :: Int16
-                                   , mwlSParmsPosY  :: Int16
-                                   , mwlSParmsVel   :: Word8 --Should be Int8, letting it go through here
-                                   } deriving (Eq, Show)
-
-
-parsePxyabw :: Get MWLSpikeParms
-parsePxyabw =
-  do
-    pid          <- getWord32le :: Get Word32
-    tPx          <- getWord16le :: Get Word16
-    tPy          <- getWord16le
-    tPa          <- getWord16le
-    tPb          <- getWord16le
-    tMw          <- getWord16le
-    tMh          <- getWord16le
-    sTime <- getWord32le
-    pX    <- getWord16le
-    pY    <- getWord16le
-    v     <- getWord8
-    return $ MWLSpikeParms
-      (word32ToInt32 pid)
-      (word16ToInt16 tPx)
-      (word16ToInt16 tPy)
-      (word16ToInt16 tPa)
-      (word16ToInt16 tPb)
-      (word16ToInt16 tMw)
-      (word16ToInt16 tMh)
-      (decodeTime sTime)
-      (word16ToInt16 pX)
-      (word16ToInt16 pY)
-      v
-
-writeSpikeParms :: MWLSpikeParms -> Put
-writeSpikeParms MWLSpikeParms{..} = do
-  putWord32le $ int32toWord32 mwlSParmsID
-  putWord16le $ int16toWord16 mwlSParmsTpX
-  putWord16le $ int16toWord16 mwlSParmsTpY
-  putWord16le $ int16toWord16 mwlSParmsTpA
-  putWord16le $ int16toWord16 mwlSParmsTpB
-  putWord16le $ int16toWord16 mwlSParmsTMaxW
-  putWord16le $ int16toWord16 mwlSParmsTMaxH
-  putWord32le $ encodeTime mwlSParmsTime
-  putWord16le $ int16toWord16 mwlSParmsPosX
-  putWord16le $ int16toWord16 mwlSParmsPosY
-  putWord8    $ mwlSParmsVel
-  -}
+  
