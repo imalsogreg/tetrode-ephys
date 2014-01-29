@@ -22,7 +22,7 @@ Source-Repository head
 
 Library
   Hs-Source-Dirs: lib
-  Ghc-Options:     -O2 -threaded -rtsopts -with-rtsopts=-N4
+  Ghc-Options:     -O2 -threaded -fprof-auto -rtsopts -with-rtsopts=-N4
   Build-Depends:
     base   (>= 4 && <= 5)
     , containers
@@ -47,6 +47,7 @@ Library
     , KdTree
     , gloss
     , safe
+    , data-binary-ieee754
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
@@ -63,6 +64,7 @@ Library
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
+    Data.Ephys.OldMWL.ParsePxyabw
     Data.Ephys.OldMWL.ParsePFile
 
 
@@ -90,7 +92,7 @@ Executable watchpos
 Executable watchfield
   Hs-Source-Dirs: samples
   Main-Is:        watchfield.hs
-  Ghc-Options:    -threaded
+  Ghc-Options:    -threaded -fprof-auto -rtsopts
   Build-Depends:  base,
                   containers,
                   pipes (>= 4.0 && < 4.1),
@@ -119,9 +121,11 @@ Executable posCutHead
   Build-Depends:  base,
                   safe,
                   bytestring,
+                  binary,
                   pipes,
                   pipes-bytestring,
                   pipes-binary,
                   lens,
                   binary,
+                  data-binary-ieee754,
                   tetrode-ephys

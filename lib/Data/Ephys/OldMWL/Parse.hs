@@ -50,9 +50,17 @@ encodeTime = floor . (* 10000)
 word16ToInt16 :: Word16 -> Int16
 word16ToInt16 x = fromIntegral x - ( (fromIntegral (maxBound :: Word16)) `div` 2)
 
+word32ToInt32 :: Word32 -> Int32
+word32ToInt32 x = fromIntegral x - ( (fromIntegral (maxBound :: Word32)) `div` 2)
+
 -- TODO Is this right?
 int16toWord16 :: Int16 -> Word16
 int16toWord16 x = fromIntegral x - fromIntegral (maxBound :: Word16)
+
+int32toWord32 :: Int32 -> Word32
+int32toWord32 x = fromIntegral x - fromIntegral (maxBound :: Word32)
+
+
 
 -- MWL units go as -2^13 -> (2^13-1)  => -10V -> 10V
 mwlUnitsToVoltage :: Double -> Double -> Double
