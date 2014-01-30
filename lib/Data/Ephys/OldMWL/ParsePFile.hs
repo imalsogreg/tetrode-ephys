@@ -5,14 +5,13 @@ module Data.Ephys.OldMWL.ParsePFile where
 import Data.Ephys.Position
 import Data.Ephys.OldMWL.FileInfo
 import Data.Ephys.OldMWL.Parse (decodeTime, encodeTime, dropResult)
+import Data.Ephys.OldMWL.Header
 
-import Control.Applicative
 import Control.Lens
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString as BS
 import qualified Pipes.ByteString as PBS
 import qualified Pipes.Binary as PBinary
-import GHC.Int
 import Pipes
 import qualified Pipes.Prelude as PP
 import qualified Data.Binary as Binary
@@ -33,6 +32,15 @@ produceMWLPos :: BSL.ByteString ->
                                              Producer BS.ByteString IO ()) ())
 produceMWLPos f = 
   PBinary.decodeGetMany parsePRecord (PBS.fromLazy . dropHeaderInFirstChunk $ f) >-> PP.map snd
+
+produceMWLPosFromFile :: FilePath -> Producer MWLPos IO ()
+produceMWLPosFromFile fn = do
+  r <- liftIO $ loadRawMWL fn
+  f <- liftIO $ BSL.readFile fn
+  case r of
+    Right (_,_) -> dropResult $ produceMWLPos f
+    Left e      -> error $ "Couldn't open mwl p file: " ++
+                   fn ++ " error: " ++ e
 
 parsePRecord :: Binary.Get MWLPos
 parsePRecord = do
