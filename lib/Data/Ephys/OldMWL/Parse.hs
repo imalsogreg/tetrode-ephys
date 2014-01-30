@@ -27,17 +27,16 @@ import qualified Data.Ephys.Spike as Arte
 import Data.Ephys.OldMWL.FileInfo
 
 data MWLSpike = MWLSpike { mwlSpikeTime      :: Double
-                         , mwlSpikeWaveforms :: [U.Vector Double]
+                         , mwlSpikeWaveforms :: [U.Vector Double] -- Double is
+                                                                  -- MWL units
+                                                                  -- though
                          } deriving (Eq, Show)
 
 
 writeSpike :: FileInfo -> MWLSpike -> Put
 writeSpike fi (MWLSpike tSpike waveforms) = do
   putWord32le $ encodeTime tSpike
-  let spikeMwlUnits = List.zipWith (\g ms -> U.map (voltageToMwlUnits g) ms)
-                      (fileGains fi)
-                      waveforms
-      vs = List.concat . List.transpose . map U.toList $ spikeMwlUnits
+  let vs = List.concat . List.transpose . map U.toList $ waveforms
   forM_ vs $ 
     putWord16le . int16toWord16 . floor 
 
@@ -47,7 +46,7 @@ decodeTime = (/ 10000) . fromIntegral
 encodeTime :: Double -> Word32
 encodeTime = floor . (* 10000)
 
-{-
+
 -- 'cast'int word to int, right?
 word16ToInt16 :: Word16 -> Int16
 word16ToInt16 x = fromIntegral x - ( (fromIntegral (maxBound :: Word16)) `div` 2) - 1
@@ -61,13 +60,15 @@ int16toWord16 x = fromIntegral x - fromIntegral (maxBound :: Word16) - 1
 
 int32toWord32 :: Int32 -> Word32
 int32toWord32 x = fromIntegral x - fromIntegral (maxBound :: Word32) - 1
--}
 
--- Test this out.
+
+{-
+-- Test this out. Didn't work!  Turned good import bad.
 word16ToInt16 = fromIntegral
 word32ToInt32 = fromIntegral
 int16toWord16 = fromIntegral
 int32toWord32 = fromIntegral
+-}
 
 -- MWL units go as -2^13 -> (2^13-1)  => -10V -> 10V
 mwlUnitsToVoltage :: Double -> Double -> Double
@@ -89,7 +90,9 @@ hMatrixVecToUnboxedVec :: Data.Packed.Vector.Vector Double -> U.Vector Double
 hMatrixVecToUnboxedVec = U.fromList . Data.Packed.Vector.toList
 
 fileGains :: FileInfo -> [Double]
-fileGains FileInfo{..} = let gains' = map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs in
+fileGains FileInfo{..} =
+  let gains' =
+        map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs in
   case hProbe of
     0 -> take 4 gains'
     1 -> take 4 . drop 4 $ gains'
@@ -134,6 +137,18 @@ produceMWLSpikesFromFile fn = do
 
 produceTrodeSpikes :: T.Text -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceTrodeSpikes tName fi b = produceMWLSpikes fi b >-> PP.map (mwlToArteSpike fi tName)
+
+produceTrodeSpikesFromFile :: FilePath -> T.Text -> Producer Arte.TrodeSpike IO ()
+produceTrodeSpikesFromFile fn trodeName = do
+  fi' <- liftIO . getFileInfo $ fn
+  r'  <- liftIO . loadRawMWL  $ fn
+  case (fi',r') of
+    (Right fi, Right (_,dataBytes)) ->
+     dropResult $ produceTrodeSpikes trodeName fi dataBytes
+    (Left e1, Left e2) ->
+      error $ fn ++ ": Bad fileinfo and file: " ++ e1 ++ " " ++ e2
+    (Left e1,_) -> error $ fn ++ ": Bad fileinfo: " ++ e1
+    (_,Left e2) -> error $ fn ++ ": Bad file: " ++ e2   
 
 -- TODO: This is misplaced.  Need something like "general utils."
 dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
