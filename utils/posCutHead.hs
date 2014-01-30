@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Main where
@@ -17,21 +18,31 @@ import qualified Pipes as P
 import Pipes ((>->))
 import qualified Pipes.Prelude as P
 import qualified Pipes.ByteString as P hiding (filter,map)
-
+import Data.Data
 import qualified Pipes.Binary     as P
 import Safe
 import Control.Lens
+import System.Console.CmdArgs
 
 data DropCmd = DropCmd
-               {
-                 ,newParamsIds :: Bool }
-
+               { inFile    :: FilePath
+               , outFile   :: FilePath
+               , startTime :: Double
+               , restartParamsIds :: Bool
+               } deriving (Show,Data,Typeable)
+dropCmd :: DropCmd
+dropCmd =
+  DropCmd { inFile           = def &= typFile     &= help "Input file"
+          , outFile          = def &= typFile     &= help "Output file"
+          , startTime        = def &= typ "TIME"  &= help "Experiment time to start at"
+          , restartParamsIds = False &= help "Set first kept id to 0 for pxyabw files"
+          }
+  
 main :: IO ()
 main = do
-  args <- getArgs
+  DropCmd inName outName tStart resetIds <- cmdArgs dropCmd
   let ext    = reverse . takeWhile (/= '.') . reverse
-  case validateArgs args of
-    Just (inName,outName,tStart) -> loadRawMWL inName >>= \r -> case r of
+  loadRawMWL inName >>= \r -> case r of
       Left e -> putStrLn $ "Parse error for " ++ outName ++ " : " ++ e
       Right (_,remaining) -> do
         inFileB <- BSL.readFile inName
@@ -81,16 +92,23 @@ main = do
                     where
                       source :: P.MonadIO m => P.Producer BSL.ByteString m ()
                       source = do
-                        _ <- P.decodeGetMany (parsePxyabw) (P.fromLazy remaining) >->
-                             P.map snd >->
-                             P.filter (\spikeParms -> mwlSParmsTime spikeParms >= tStart) >->
-                             encodeSpikeParms >->
-                             P.map BSL.fromStrict
-                        return ()
+                        dropResult (P.decodeGetMany (parsePxyabw) (P.fromLazy remaining)) >->
+                          P.map snd >->
+                          P.filter (\spikeParms -> mwlSParmsTime spikeParms >= tStart) >->
+                          bumpIdMaybe resetIds 0 >->
+                          encodeSpikeParms >->
+                          P.map BSL.fromStrict
                       encodeSpikeParms :: P.MonadIO m => P.Pipe MWLSpikeParms BS.ByteString m r
                       encodeSpikeParms = P.for P.cat (\s -> P.encodePut (writeSpikeParms s))
                 _ -> putStrLn $ "Not yet supporting filtering for extension: " ++ ext inName
-    Nothing -> printUsage
+
+bumpIdMaybe :: (Monad m) => Bool -> Integer ->P.Pipe MWLSpikeParms MWLSpikeParms m ()
+bumpIdMaybe doBump ind = do
+  spikeParms <- P.await
+  P.yield $ if doBump
+          then spikeParms { mwlSParmsID = ind }
+          else spikeParms
+  bumpIdMaybe doBump (ind + 1)
 
 validateArgs :: [String] -> Maybe (FilePath,FilePath, Double)
 validateArgs [inName,outName,tStartS] =

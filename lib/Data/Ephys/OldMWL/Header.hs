@@ -20,6 +20,7 @@ import           Control.Lens
 -- Key-value store for MWL header data
 type HeaderData = Map.Map BS.ByteString BS.ByteString
 
+-- Should this be in Header.hs?  or somewhere else?
 loadRawMWL :: FilePath -> IO (Either String (HeaderData, BSL.ByteString))
 loadRawMWL fn = do
   r <- parseFromFile parseHeader fn

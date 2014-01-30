@@ -4,6 +4,7 @@
 
 module Data.Ephys.OldMWL.Parse where
 
+import Data.Ephys.OldMWL.Header
 import Control.Monad (forM_, replicateM, forever)
 import Data.Maybe (listToMaybe)
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
@@ -46,21 +47,27 @@ decodeTime = (/ 10000) . fromIntegral
 encodeTime :: Double -> Word32
 encodeTime = floor . (* 10000)
 
+{-
 -- 'cast'int word to int, right?
 word16ToInt16 :: Word16 -> Int16
-word16ToInt16 x = fromIntegral x - ( (fromIntegral (maxBound :: Word16)) `div` 2)
+word16ToInt16 x = fromIntegral x - ( (fromIntegral (maxBound :: Word16)) `div` 2) - 1
 
 word32ToInt32 :: Word32 -> Int32
-word32ToInt32 x = fromIntegral x - ( (fromIntegral (maxBound :: Word32)) `div` 2)
+word32ToInt32 x = fromIntegral x - ( (fromIntegral (maxBound :: Word32)) `div` 2) - 1
 
 -- TODO Is this right?
 int16toWord16 :: Int16 -> Word16
-int16toWord16 x = fromIntegral x - fromIntegral (maxBound :: Word16)
+int16toWord16 x = fromIntegral x - fromIntegral (maxBound :: Word16) - 1
 
 int32toWord32 :: Int32 -> Word32
-int32toWord32 x = fromIntegral x - fromIntegral (maxBound :: Word32)
+int32toWord32 x = fromIntegral x - fromIntegral (maxBound :: Word32) - 1
+-}
 
-
+-- Test this out.
+word16ToInt16 = fromIntegral
+word32ToInt32 = fromIntegral
+int16toWord16 = fromIntegral
+int32toWord32 = fromIntegral
 
 -- MWL units go as -2^13 -> (2^13-1)  => -10V -> 10V
 mwlUnitsToVoltage :: Double -> Double -> Double
@@ -72,10 +79,6 @@ mwlUnitsToVoltage gain inV = inV * cVG/bMWL + (zMWL / bMWL)
 voltageToMwlUnits :: Double -> Double -> Double
 voltageToMwlUnits gain inV = inV / (mwlUnitsToVoltage gain 1.0)
     
--- Assuming the Int16 is signed
-wordToMWLDouble :: Word16 -> Double
-wordToMWLDouble inV =
-  fromIntegral . word16ToInt16 $ inV
 
 chunkToLength :: [a] -> Int -> [[a]]
 chunkToLength xs n = aux [] xs
@@ -97,8 +100,9 @@ parseSpike fi@FileInfo{..}
   | okSpikeFile fi = --FIXME
     -- tsType unused because we're assuming tsType -> double.  Fix this by figuring out the
     -- MWL int to type code
-    let gains = fileGains fi
-        Just (_,_,totalSampsPerSpike) = listToMaybe $ filter (\(n,_,_) -> n == "waveform") hRecordDescr
+    --let gains = fileGains fi
+    -- TODO REMOVE PARTIAL FUNCTION
+    let Just (_,_,totalSampsPerSpike) = listToMaybe $ filter (\(n,_,_) -> n == "waveform") hRecordDescr
     in do
       ts <- getWord32le :: Get Word32
       -- grab one sample at a time (word16) from the stream: nchans * nsampsperchan
@@ -117,6 +121,16 @@ parseSpike fi@FileInfo{..}
 produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceMWLSpikes fi b = let myGet = parseSpike fi in
   PBinary.decodeGetMany myGet (PBS.fromLazy . dropHeaderInFirstChunk $ b) >-> PP.map snd
+
+produceMWLSpikesFromFile :: FilePath -> Producer MWLSpike IO ()
+produceMWLSpikesFromFile fn = do
+  fi' <- liftIO $ getFileInfo fn
+  r   <- liftIO $ loadRawMWL fn
+  case (r,fi') of
+--    Left e -> do
+--      liftIO $ putStrLn $ "Couldn't open filename" ++ fn
+    (Right (_,dataBits), Right fi) ->
+      dropResult $ produceMWLSpikes fi dataBits
 
 produceTrodeSpikes :: T.Text -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceTrodeSpikes tName fi b = produceMWLSpikes fi b >-> PP.map (mwlToArteSpike fi tName)

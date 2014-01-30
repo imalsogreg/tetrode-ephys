@@ -4,6 +4,7 @@
 
 module Data.Ephys.OldMWL.ParsePxyabw where
 
+import Data.Ephys.OldMWL.Header
 import qualified Data.Ephys.Spike as Arte
 import Data.Ephys.OldMWL.Parse -- We're using the old file organization.  b/c hasty
 import Data.Ephys.OldMWL.FileInfo
@@ -28,7 +29,7 @@ import Data.Packed.Vector (Vector, toList)
 import Control.Applicative
 import Data.Binary.IEEE754
 
-data MWLSpikeParms = MWLSpikeParms { mwlSParmsID    :: Word32
+data MWLSpikeParms = MWLSpikeParms { mwlSParmsID    :: Integer
                                    , mwlSParmsTpX   :: Word16
                                    , mwlSParmsTpY   :: Word16
                                    , mwlSParmsTpA   :: Word16
@@ -41,10 +42,14 @@ data MWLSpikeParms = MWLSpikeParms { mwlSParmsID    :: Word32
                                    , mwlSParmsVel   :: Word32
                                    } deriving (Eq, Show)
 
+instance Binary MWLSpikeParms where
+  get = parsePxyabw
+  put = writeSpikeParms
 
 parsePxyabw :: Get MWLSpikeParms
 parsePxyabw = MWLSpikeParms
-              <$> getWord32le
+              <$> (fromIntegral <$> getWord32le)
+--              <$> getWord32le
               <*> getWord16le
               <*> getWord16le
               <*> getWord16le
@@ -58,7 +63,8 @@ parsePxyabw = MWLSpikeParms
               
 writeSpikeParms :: MWLSpikeParms -> Put
 writeSpikeParms MWLSpikeParms{..} = do
-  putWord32le $ mwlSParmsID
+  putWord32le $ fromIntegral  mwlSParmsID
+--  putWord32le $ mwlSParmsID
   putWord16le $ mwlSParmsTpX
   putWord16le $ mwlSParmsTpY
   putWord16le $ mwlSParmsTpA
@@ -69,4 +75,15 @@ writeSpikeParms MWLSpikeParms{..} = do
   putWord16le $ mwlSParmsPosX
   putWord16le $ mwlSParmsPosY
   putWord32le    $ mwlSParmsVel
+
+produceSpikeParmsFromFile :: FilePath -> Producer MWLSpikeParms IO ()
+produceSpikeParmsFromFile fn = do
+  r <- liftIO $ loadRawMWL fn
+  case r of
+    Right (_,dataBytes) -> dropResult $ produceSpikeParms dataBytes
   
+
+produceSpikeParms :: BSL.ByteString -> Producer MWLSpikeParms IO
+                     (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
+produceSpikeParms b =
+  PBinary.decodeMany (PBS.fromLazy b) >-> PP.map snd

@@ -48,6 +48,7 @@ Library
     , gloss
     , safe
     , data-binary-ieee754
+    , cmdargs
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
@@ -128,4 +129,5 @@ Executable posCutHead
                   lens,
                   binary,
                   data-binary-ieee754,
+                  cmdargs,
                   tetrode-ephys
