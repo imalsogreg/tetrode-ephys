@@ -15,7 +15,7 @@ import qualified Data.ByteString.Lazy  as BSL
 import           Data.Maybe (catMaybes)
 import           Data.Char
 import           System.IO 
-import           Control.Lens
+import           Control.Lens hiding (noneOf)
 
 -- Key-value store for MWL header data
 type HeaderData = Map.Map BS.ByteString BS.ByteString

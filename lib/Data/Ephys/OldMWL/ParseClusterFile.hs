@@ -8,7 +8,7 @@ import Data.Map
 import Text.Parsec
 import Control.Monad (liftM, replicateM)
 import Control.Applicative ((*>),(<*>),(<$>))
-import Control.Lens
+import Control.Lens hiding (noneOf)
 
 getClusters :: FilePath -> FilePath -> IO (Either String (Map Int ClusterMethod))
 getClusters clustFile waveformFile = do

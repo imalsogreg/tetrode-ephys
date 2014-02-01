@@ -42,7 +42,7 @@ Library
     , unordered-containers
     , cpu
     , hmatrix
-    , lens
+    , lens     (>= 4.0 && < 4.1)
     , pipes-rt (>= 0.4 && < 0.5)
     , KdTree
     , gloss
