@@ -4,6 +4,7 @@ module Data.Ephys.Cluster where
 
 import Data.Ephys.Spike
 import qualified Data.Vector as V
+import Data.Vector ((!))
 import qualified Data.Vector.Unboxed as U
 import Data.Serialize
 import GHC.Generics (Generic)
@@ -13,9 +14,9 @@ import Control.Lens
 type ChanInd = Int
 type Polygon = [(Double,Double)]
 
-data CartBound = CartBound { _cartXChan :: ChanInd
-                           , _cartYChan :: ChanInd
-                           , _cartPolygon :: Polygon
+data CartBound = CartBound { _cartXChan   :: !ChanInd
+                           , _cartYChan   :: !ChanInd
+                           , _cartPolygon :: !Polygon
                            }
                       deriving (Eq, Show,Generic)
 
@@ -28,11 +29,11 @@ data PolarBound = PolarBound -- Placeholder
 
 instance Serialize PolarBound where
                            
-data ClusterMethod = ClustCartBound     CartBound
-                   | ClustPolarBound    PolarBound
+data ClusterMethod = ClustCartBound     !CartBound
+                   | ClustPolarBound    !PolarBound
                    | ClustSoftCartesian 
-                   | ClustIntersection [ClusterMethod]
-                   | ClustUnion [ClusterMethod]
+                   | ClustIntersection  ![ClusterMethod]
+                   | ClustUnion         ![ClusterMethod]
                    deriving (Eq, Show,Generic)
 
 instance Serialize ClusterMethod where
@@ -41,8 +42,8 @@ spikeInCluster :: ClusterMethod -> TrodeSpike -> Bool
 spikeInCluster (ClustCartBound cb) s =
   pointInPolygon (cb ^. cartPolygon) p
   where
-    amps = spikeAmplitudes s
-    p    = (amps !! (cb ^. cartXChan), amps !! (cb ^. cartYChan))
+    amps = spikeAmplitudes s :: V.Vector Double
+    p    = (amps ! (cb ^. cartXChan), amps ! (cb ^. cartYChan))
 spikeInCluster (ClustPolarBound _) _ =
   error "Not implemented polar clusts"
 spikeInCluster (ClustSoftCartesian) _ =
@@ -54,7 +55,7 @@ spikeInCluster (ClustUnion cbs) s =
 
   
 
-{-
+{- Don't Delete 
 -- Transcribe this very imparative c code
 int pnpoly(int nvert, float *vertx, float *verty, float testx, float testy)
 {

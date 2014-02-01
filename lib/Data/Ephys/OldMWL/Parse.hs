@@ -9,6 +9,7 @@ import Control.Monad (forM_, replicateM, forever)
 import Data.Maybe (listToMaybe)
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
+import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import GHC.Int
 import Pipes
@@ -168,7 +169,9 @@ catSpike' = forever $ do
 mwlToArteSpike :: FileInfo -> T.Text -> MWLSpike -> Arte.TrodeSpike
 mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
   where tTime      = mwlSpikeTime s
-        gains      = fileGains fi
-        tWaveforms = Prelude.zipWith
-                     (\g -> U.map (mwlUnitsToVoltage g)) gains (mwlSpikeWaveforms s)
+        gains      = V.fromList $ fileGains fi
+        tWaveforms = V.zipWith
+                     (\g -> U.map (mwlUnitsToVoltage g))
+                     gains
+                     (V.fromList $ mwlSpikeWaveforms s)
         tOpts = 1001 -- TODO: Get trodeopts

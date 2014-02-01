@@ -12,8 +12,10 @@ import qualified Data.Map as Map
 import Control.Lens
 import Text.Printf
 
+rad2Deg :: Float -> Float
 rad2Deg = (* (-180 / pi))
 
+r2 :: Double -> Float
 r2 = realToFrac
 
 trackPosPicture :: TrackPos -> Picture
@@ -24,22 +26,22 @@ trackBinFrame b f = trackBinFrameDilated b f 1
 
 trackBinFrameDilated :: TrackBin -> ([(Float,Float)] -> Picture) -> Float -> Picture
 trackBinFrameDilated (TrackBin _ (Location x y _) dir bStart bEnd w) picType d =
-    Translate (r2 x) (r2 y) $ Rotate (r2 $ rad2Deg dir) $
-    picType [(r2 bStart, r2 $ w/(-2)* r2 d)
-            ,(r2 bEnd,   r2 $ w/(-2)* r2 d)
-            ,(r2 bEnd,   r2 $ w/2* r2 d)
-            ,(r2 bStart, r2 $ w/2* r2 d)
-            ,(r2 bStart, r2 $ w/(-2)* r2 d)
+    Translate (r2 x) (r2 y) $ Rotate (rad2Deg $ r2 dir) $
+    picType [(r2 bStart, (r2 w)/(-2)* d)
+            ,(r2 bEnd,   (r2 w)/(-2)* d)
+            ,(r2 bEnd,   (r2 w)/2* d)
+            ,(r2 bStart, (r2 w)/2* d)
+            ,(r2 bStart, (r2 w)/(-2)*d)
             ]
 
 drawTrack :: Track -> Picture
 drawTrack t =
   pictures $ map (flip trackBinFrame Line) (t ^. trackBins) ++ map binArrow (t^. trackBins)
-  where binArrow bin = drawArrow (bin^.binLoc.x, bin^.binLoc.y)
-                       ((bin^.binZ - bin^.binA)/2)
-                       (rad2Deg $ bin^.binDir) 0.01 0.08 0.04
+  where binArrow bin = drawArrowFloat (r2 $ bin^.binLoc.x, r2 $ bin^.binLoc.y)
+                       ((r2 $ bin^.binZ - bin^.binA)/2)
+                       (rad2Deg . r2 $ bin^.binDir) 0.01 0.08 0.04
 
-
+{-
 drawArrow :: (Double,Double) -> Double -> Double -> Double -> Double -> Double -> Picture
 drawArrow (baseX,baseY) mag ang thickness headLen headThickness =
   let body = Polygon [(0, - r2 thickness/2)
@@ -51,6 +53,19 @@ drawArrow (baseX,baseY) mag ang thickness headLen headThickness =
                      ,(r2 mag,0)
                      ,(r2 mag - r2 headLen, r2 headThickness/2)]
   in Translate (r2 baseX) (r2 baseY) . Rotate (r2 ang) $ pictures [body,head]
+-}
+
+drawArrowFloat :: (Float,Float) -> Float -> Float -> Float -> Float -> Float -> Picture
+drawArrowFloat (baseX,baseY) mag ang thickness headLen headThickness =
+  let body = Polygon [(0, - thickness/2)
+                     ,(mag - headLen, - thickness/2)
+                     ,(mag,0)
+                     ,(mag - headLen, thickness/2)
+                     ,(0, thickness/2)]
+      aHead = Polygon [(mag - headLen, - headThickness/2)
+                     ,(mag,0)
+                     ,(mag - headLen, headThickness/2)]
+  in Translate (baseX) (baseY) . Rotate (ang) $ pictures [body,aHead]
 
 drawTrackPos :: TrackPos -> Float -> Picture
 drawTrackPos (TrackPos bin dir ecc) alpha =
@@ -62,7 +77,9 @@ drawTrackPos (TrackPos bin dir ecc) alpha =
     dilation = if ecc == InBounds then 1 else 2
 
 drawPos :: Position -> Picture
-drawPos p = drawArrow (p^.location.x,p^.location.y) (p^.speed) (rad2Deg $ p^.heading) 0.01 0.08 0.04
+drawPos p = drawArrowFloat
+            (r2 $ p^.location.x, r2 $ p^.location.y) (r2 $ p^.speed) (rad2Deg . r2 $ p^.heading)
+            0.01 0.08 0.04
     
 drawField :: Field Double -> Picture
 drawField field =
@@ -91,4 +108,4 @@ writeField field =
     tX = modePos^.trackBin.binLoc.x
     tY = modePos^.trackBin.binLoc.y
     tD = show $ modePos^.trackDir
-    headP = snd . List.head . Map.toList $ field
+--    headP = snd . List.head . Map.toList $ field

@@ -38,7 +38,11 @@ eventUpdateWorld :: Event -> World -> IO World
 eventUpdateWorld (EventMotion (x',y')) (now, p,t,occ) =
   let --p' = Position 0 (Location ((r2 x')/ r2 gScale) ((r2 y') / r2 gScale) (p^.location.z))
       --     (Angle 0 0 0) 0 0 ConfSure
-      p' = stepPos p (r2 now) (Location ((r2 x')/r2 gScale) ((r2 y') / r2 gScale) (p^.location.z)) (Angle 0 0 0) ConfSure
+      p' = stepPos p (realToFrac now)
+           (Location ((realToFrac x')/realToFrac gScale)
+            ((realToFrac y') / realToFrac gScale)
+            (p^.location.z))
+           (Angle 0 0 0) ConfSure
       occ' = updateField (+) occ (posToField t p (PosGaussian 0.4))
   in return (now, p',t,occ')
 eventUpdateWorld (EventKey _ _ _ _) w = return w
