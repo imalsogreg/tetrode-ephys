@@ -46,11 +46,11 @@ world0 clusters = do
   pos0  <- newTVarIO p0
   tPos0 <- newTVarIO $ posToField track p0 kern
   cells <- forM (Map.elems clusters) (\c -> newTVarIO (PlaceCell c Map.empty))
-  occ0  <- newTVarIO $ Map.empty
+  occ0  <- newTVarIO $ occupancy0
   return $ World 0 pos0 tPos0 cells occ0
 
 kern = PosGaussian 0.1
-occupancy0 = Map.fromList $ zip (allTrackPos track) [0..]
+occupancy0 = Map.fromList $ zip (allTrackPos track) (repeat 0.1)
 p0         = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure sZ sZ (-1/0 :: Double) (Location 0 0 0)
   where sZ = take 15 (repeat 0)
 
