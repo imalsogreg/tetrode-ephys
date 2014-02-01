@@ -87,9 +87,10 @@ drawField field =
 
 drawNormalizedField :: Field Double -> Picture
 drawNormalizedField field =
-  pictures $ map (uncurry drawTrackPos) (Map.toList $ Map.map (r2 . (/fMax)) field)
-    where fMax :: Double
-          fMax = Map.foldl' max 0 field
+  pictures $ map (uncurry drawTrackPos)
+  (Map.toList $ Map.map  ((*fMax) . r2) field)
+    where fMax :: Float
+          fMax = r2 $ 1 / Map.foldl' max 0.1 field
                  
 setAlpha :: Color -> Float -> Color
 setAlpha c alpha = case rgbaOfColor c of
