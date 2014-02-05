@@ -33,7 +33,7 @@ main = do
       Nothing -> error "Couldn't find cluster 1"
       Just cm@(ClustIntersection polys) -> do
         len <- PP.length 
-               (dropResult (produceTrodeSpikes "01" fi tt) >->
+               (dropResult (produceTrodeSpikes 1 fi tt) >->
                 relativeTimeCat spikeTime >->
                 PP.filter (spikeInCluster cm) >-> PP.print)
         --print cm

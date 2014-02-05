@@ -76,7 +76,7 @@ streamSpikes trodeFile world fileT0 = do
   fSpikes    <- BSL.readFile trodeFile
   (Right fi) <- getFileInfo trodeFile
   runEffect $
-    (dropResult (produceTrodeSpikes "test" fi fSpikes)) >->
+    (dropResult (produceTrodeSpikes 63 fi fSpikes)) >->
     relativeTimeCatDelayedBy spikeTime fileT0 >-> --  PP.print >->
     fanoutSpikeToCells world
 

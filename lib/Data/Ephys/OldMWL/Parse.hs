@@ -136,10 +136,11 @@ produceMWLSpikesFromFile fn = do
     (Right (_,dataBits), Right fi) ->
       dropResult $ produceMWLSpikes fi dataBits
 
-produceTrodeSpikes :: T.Text -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
+produceTrodeSpikes :: Int -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
 produceTrodeSpikes tName fi b = produceMWLSpikes fi b >-> PP.map (mwlToArteSpike fi tName)
 
-produceTrodeSpikesFromFile :: FilePath -> T.Text -> Producer Arte.TrodeSpike IO ()
+-- TODO Int to TrodeName
+produceTrodeSpikesFromFile :: FilePath -> Int -> Producer Arte.TrodeSpike IO ()
 produceTrodeSpikesFromFile fn trodeName = do
   fi' <- liftIO . getFileInfo $ fn
   r'  <- liftIO . loadRawMWL  $ fn
@@ -166,7 +167,7 @@ catSpike' = forever $ do
   lift $ putStrLn "catSpike'"
   yield s
 
-mwlToArteSpike :: FileInfo -> T.Text -> MWLSpike -> Arte.TrodeSpike
+mwlToArteSpike :: FileInfo -> Int -> MWLSpike -> Arte.TrodeSpike
 mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
   where tTime      = mwlSpikeTime s
         gains      = V.fromList $ fileGains fi
@@ -175,3 +176,11 @@ mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
                      gains
                      (V.fromList $ mwlSpikeWaveforms s)
         tOpts = 1001 -- TODO: Get trodeopts
+
+-- "path/to/0224.tt" -> "24"
+-- TODO : Fix.  Only drop 5 when extention has 2 letters.
+mwlTrodeNameFromPath :: String -> T.Text
+mwlTrodeNameFromPath = T.pack . reverse . take 2 . drop 5 . reverse  
+
+
+

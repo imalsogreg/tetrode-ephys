@@ -18,11 +18,11 @@ import qualified Data.Binary as Binary
 import Data.Binary.Put
 import Data.Binary.Get (getWord32le, getWord16le)
 
-data MWLPos = MWLPos { _mwlPosTime  :: Double
-                     , _mwlPxf      :: Int
-                     , _mwlPyf      :: Int
-                     , _mwlPxb      :: Int
-                     , _mwlPyb      :: Int
+data MWLPos = MWLPos { _mwlPosTime  :: !Double
+                     , _mwlPxf      :: !Int
+                     , _mwlPyf      :: !Int
+                     , _mwlPxb      :: !Int
+                     , _mwlPyb      :: !Int
                      } deriving (Eq, Show)
 
 $(makeLenses ''MWLPos)

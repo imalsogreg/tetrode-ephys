@@ -19,7 +19,7 @@ import Data.Ephys.EphysDefs
 type Waveform = U.Vector Voltage  -- This should be the waveform from Data.Ephys.Waveform probably?
 
 -- |Representation of an action potential recorded on a tetrode
-data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Text
+data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Int
                              , spikeTrodeOptsHash  :: !Int
                              , spikeTime           :: !ExperimentTime
                              , spikeWaveforms      :: V.Vector Waveform
@@ -31,12 +31,12 @@ toRelTime TrodeSpike{..} = spikeTime
 
 instance S.Serialize TrodeSpike where
   put TrodeSpike{..} = do
-    S.put (encodeUtf32LE spikeTrodeName)
+    S.put spikeTrodeName
     S.put spikeTrodeOptsHash
     S.put spikeTime
     S.put spikeWaveforms
   get = do
-    name <- decodeUtf32LE `liftM` S.get
+    name <- S.get
     opts <- S.get
     time <- S.get
     waveforms <- S.get
@@ -44,12 +44,12 @@ instance S.Serialize TrodeSpike where
 
 instance B.Binary TrodeSpike where
   put TrodeSpike{..} = do
-    B.put (encodeUtf32LE spikeTrodeName)
+    B.put spikeTrodeName
     B.put spikeTrodeOptsHash
     B.put spikeTime
     B.put spikeWaveforms
   get = do
-    name <- decodeUtf32LE `liftM` B.get
+    name <- B.get
     opts <- B.get
     time <- B.get
     waveforms <- B.get
@@ -97,7 +97,7 @@ data TrodeAcquisitionOpts = TrodeAcquisitionOpts { spikeFilterSpec :: FilterSpec
 -- TODO: a test spike
 mySpike :: IO TrodeSpike
 mySpike = return $ TrodeSpike tName tOpts sTime sWF
-  where tName = pack "TestSpikeTrode"
+  where tName = 63
         tOpts = 1001
         sTime = 10.10
         sWF = V.replicate 4 $ U.replicate 32 0

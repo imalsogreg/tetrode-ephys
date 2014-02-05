@@ -11,22 +11,22 @@ import Data.Serialize
 import GHC.Generics
 import qualified Data.Trees.KdTree as KD
 
-data Location = Location {_x :: Double, _y :: Double, _z :: Double}
+data Location = Location {_x :: !Double, _y :: !Double, _z :: !Double}
               deriving (Eq, Ord, Show, Generic)
 
-data Angle = Angle {_yaw :: Double, _pitch :: Double, _roll :: Double}
+data Angle = Angle {_yaw :: !Double, _pitch :: !Double, _roll :: !Double}
            deriving (Eq, Ord, Show, Generic)
 
 data PosConf = ConfNone | ConfUnsure | ConfSure
              deriving (Eq, Ord, Show, Generic)
 
 -- Full 3D position data.  For position relative to a linear track, see TrackPos
-data Position = Position { _posTime        :: ExperimentTime
-                         , _location       :: Location
-                         , _angle          :: Angle
-                         , _heading        :: Double
-                         , _speed          :: Double
-                         , _posConfidence  :: PosConf
+data Position = Position { _posTime        :: !ExperimentTime
+                         , _location       :: !Location
+                         , _angle          :: !Angle
+                         , _heading        :: !Double
+                         , _speed          :: !Double
+                         , _posConfidence  :: !PosConf
                          , _headingHistory :: [Double]
                          , _speedHistory   :: [Double]
 

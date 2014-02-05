@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, BangPatterns #-}
 
 module Data.Ephys.TrackPosition where
 
@@ -11,12 +11,12 @@ import Control.Lens
 import Control.Applicative ((<$>),(<*>))
 --import qualified Data.Trees.KdTree as KD
 
-data TrackBin = TrackBin { _binNam :: String
-                         , _binLoc :: Location
-                         , _binDir :: Double -- radians
-                         , _binA   :: Double --
-                         , _binZ   :: Double
-                         , _binWid :: Double
+data TrackBin = TrackBin { _binNam :: !String
+                         , _binLoc :: !Location
+                         , _binDir :: !Double -- radians
+                         , _binA   :: !Double --
+                         , _binZ   :: !Double
+                         , _binWid :: !Double
                          } deriving (Eq, Ord, Show)
 
 $(makeLenses ''TrackBin)
@@ -28,7 +28,7 @@ instance KD.Point TrackBin where
   dist2 b1 b2 = KD.dist2 (b1 ^. binLoc) (b2 ^. binLoc)
 -}
 
-data TrackSpec = TrackSpec { _keyPoints :: Graph }  -- node :: (x,y), key :: String
+data TrackSpec = TrackSpec { _keyPoints :: !Graph }  -- node :: (x,y), key :: String
 
 data Track = Track { _trackBins  :: [TrackBin]
                    } deriving (Eq, Show)
@@ -39,9 +39,9 @@ data TrackDirection = Outbound | Inbound
 data TrackEccentricity = OutOfBounds | InBounds 
                        deriving (Eq, Ord, Show)
 
-data TrackPos = TrackPos { _trackBin :: TrackBin
-                         , _trackDir :: TrackDirection
-                         , _trackEcc :: TrackEccentricity
+data TrackPos = TrackPos { _trackBin :: !TrackBin
+                         , _trackDir :: !TrackDirection
+                         , _trackEcc :: !TrackEccentricity
                          } deriving (Eq, Ord, Show)
 
 $(makeLenses ''TrackSpec)

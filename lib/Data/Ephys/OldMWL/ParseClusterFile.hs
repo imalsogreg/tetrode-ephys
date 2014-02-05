@@ -5,6 +5,7 @@ import Data.Ephys.OldMWL.Parse
 import Data.Ephys.OldMWL.FileInfo
 
 import Data.Map
+import qualified Data.Text as T
 import Text.Parsec
 import Control.Monad (liftM, replicateM)
 import Control.Applicative ((*>),(<*>),(<$>))
@@ -97,3 +98,8 @@ pDouble :: Parsec String () Double
 pDouble = rd <$> ((++) <$> pInt <*> pDecimal)
   where rd = read :: String -> Double
         pDecimal = option "" ((:) <$> char '.' <*> pNumber)
+
+-- "path/to/0224.tt" -> "path/to/cbfile-run"
+cbNameFromTTPath :: String -> FilePath -> T.Text
+cbNameFromTTPath cbFileName ttPath = T.pack . (++ cbFileName) .
+                              reverse . dropWhile (/= '/') . reverse $ ttPath
