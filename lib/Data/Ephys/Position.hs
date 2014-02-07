@@ -10,6 +10,7 @@ import Pipes
 import Data.Serialize
 import GHC.Generics
 import qualified Data.Trees.KdTree as KD
+import Data.Complex
 
 data Location = Location {_x :: !Double, _y :: !Double, _z :: !Double}
               deriving (Eq, Ord, Show, Generic)
@@ -69,7 +70,8 @@ stepPos p0 t loc ang conf =
           instantHeading = atan2 dy dx  --TODO: Yep.
           hHist'         = instantHeading : init (p0^.headingHistory)
           heading'       = circMean hHist'
-          instantSpeed   = locDist (p0^.location) loc' / dt
+          instantSpeed   = locDist (p0^.location) loc' / dt *
+                           (circLengthNorm hHist')
           sHist'         = (clipMax 100 instantSpeed) : init (p0^.speedHistory)
           speed'         = mean sHist'
           posUnstickTime = 1
@@ -116,8 +118,19 @@ instance KD.Point Location where
 mean :: [Double] -> Double
 mean xs = sum xs / (fromIntegral . length $ xs)
 
+mrv :: [Double] -> Complex Double
+mrv angs = let mrvX = sum . map cos $ angs
+               mrvY = sum . map sin $ angs
+           in  mrvX :+ mrvY
+
 circMean :: [Double] -> Double
 circMean angs =
-  let mrvX = mean . map cos $ angs
-      mrvY = mean . map sin $ angs
-  in atan2 mrvY mrvX  -- TODO - is this right?
+  let (r :+ i) = mrv angs
+  in  atan2 i r  -- TODO - is this right?
+
+circLengthNorm :: [Double] -> Double
+circLengthNorm angs =
+  let (r :+ i) = mrv angs in
+  (r^(2::Int) + i^(2::Int)) /
+  ((^(2::Int)) . fromIntegral $ length angs)
+  
