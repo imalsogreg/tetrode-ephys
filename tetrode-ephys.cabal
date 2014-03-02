@@ -36,7 +36,7 @@ Library
     , parsec
     , hashable
     , pipes (==4.0.2)
-    , binary 
+    , binary (==0.6.4.0)
     , pipes-parse (==2.0.2)
     , pipes-binary (==0.2.1)
     , pipes-bytestring (== 1.0.3)
