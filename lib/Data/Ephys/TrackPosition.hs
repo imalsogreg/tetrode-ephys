@@ -126,19 +126,20 @@ circularTrack :: (Double,Double) -- (x,y) in meters
                  -> Double       -- bin length in meters
                  -> Track
 circularTrack (cX,cY) r h w tau =
-  Track [aPoint t | t <- thetaCs]
+  Track [aPoint t [n] | (t,n) <- zip thetaCs names]
   where
     fI = fromIntegral
     circumference = 2*pi*r
     nPts = floor (circumference / tau) :: Int
+    names = map (toEnum) [0..nPts-1]
     thetaIncr = 2*pi/ fI nPts
     thetaCs = [0, thetaIncr .. 2*pi-thetaIncr]
-    aPoint :: Double -> TrackBin
-    aPoint theta = TrackBin ""
-                   (Location (r * cos theta + cX) (r * sin theta + cY) h)
-                   (theta + pi/2)
-                   (-1 * tau / 2) (tau / 2)
-                   w
+    aPoint :: Double -> String -> TrackBin
+    aPoint theta n = TrackBin n
+                     (Location (r * cos theta + cX) (r * sin theta + cY) h)
+                     (theta + pi/2)
+                     (-1 * tau / 2) (tau / 2)
+                     w
   
 updateField :: (a -> a -> a) -> Field a -> Field a -> Field a
 updateField = Map.unionWith
