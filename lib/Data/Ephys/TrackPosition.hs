@@ -131,11 +131,11 @@ circularTrack (cX,cY) r h w tau =
     fI = fromIntegral
     circumference = 2*pi*r
     nPts = floor (circumference / tau) :: Int
-    names = map (toEnum) [0..nPts-1]
+    names = map (toEnum + fromEnum 'A') [0..nPts-1]
     thetaIncr = 2*pi/ fI nPts
     thetaCs = [0, thetaIncr .. 2*pi-thetaIncr]
     aPoint :: Double -> String -> TrackBin
-    aPoint theta n = TrackBin n
+    aPoint theta n = TrackBin "hi"
                      (Location (r * cos theta + cX) (r * sin theta + cY) h)
                      (theta + pi/2)
                      (-1 * tau / 2) (tau / 2)
