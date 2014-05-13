@@ -28,23 +28,23 @@ Library
     , containers
     , directory
     , cereal
-    , vector (>= 0.10 && < 0.10.10)
+    , vector
     , vector-binary-instances
-    , text (>= 1.1.0.0 && < 1.1.1)
+    , text
     , time
     , bytestring
     , parsec
     , hashable
-    , pipes (==4.0.2)
-    , binary (>=0.6 && < 0.8)
-    , pipes-parse (==2.0.2)
-    , pipes-binary (==0.2.1)
-    , pipes-bytestring (== 1.0.3)
+    , pipes
+    , binary
+    , pipes-parse
+    , pipes-binary
+    , pipes-bytestring
     , unordered-containers
     , cpu
     , hmatrix
-    , lens     (>= 4.0 && < 4.1)
-    , pipes-rt (>= 0.4 && < 0.5)
+    , lens
+    , pipes-rt
     , KdTree
     , gloss
     , safe

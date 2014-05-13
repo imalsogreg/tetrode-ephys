@@ -11,12 +11,12 @@ import Control.Lens
 import Control.Applicative ((<$>),(<*>))
 --import qualified Data.Trees.KdTree as KD
 
-data TrackBin = TrackBin { _binNam :: !String
-                         , _binLoc :: !Location
-                         , _binDir :: !Double -- radians
-                         , _binA   :: !Double --
-                         , _binZ   :: !Double
-                         , _binWid :: !Double
+data TrackBin = TrackBin { _binName :: !String
+                         , _binLoc  :: !Location
+                         , _binDir  :: !Double -- radians
+                         , _binA    :: !Double --
+                         , _binZ    :: !Double
+                         , _binWid  :: !Double
                          } deriving (Eq, Ord, Show)
 
 $(makeLenses ''TrackBin)
@@ -131,11 +131,11 @@ circularTrack (cX,cY) r h w tau =
     fI = fromIntegral
     circumference = 2*pi*r
     nPts = floor (circumference / tau) :: Int
-    names = map (toEnum + fromEnum 'A') [0..nPts-1]
+    names = map (toEnum . (+  fromEnum 'A')) [0..nPts-1]
     thetaIncr = 2*pi/ fI nPts
     thetaCs = [0, thetaIncr .. 2*pi-thetaIncr]
     aPoint :: Double -> String -> TrackBin
-    aPoint theta n = TrackBin "hi"
+    aPoint theta n = TrackBin n
                      (Location (r * cos theta + cX) (r * sin theta + cY) h)
                      (theta + pi/2)
                      (-1 * tau / 2) (tau / 2)
