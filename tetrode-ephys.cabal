@@ -35,12 +35,12 @@ Library
     , bytestring
     , parsec
     , hashable
-    , pipes
+    , pipes == 4.1.1
     , binary
     , pipes-parse >= 3.0.1
     , pipes-binary >= 0.4
     , pipes-bytestring
-    , transformers
+    , transformers == 0.3.0.0
     , unordered-containers
     , cpu
     , hmatrix
