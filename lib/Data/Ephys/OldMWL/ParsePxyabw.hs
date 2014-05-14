@@ -49,7 +49,6 @@ instance Binary MWLSpikeParms where
 parsePxyabw :: Get MWLSpikeParms
 parsePxyabw = MWLSpikeParms
               <$> (fromIntegral <$> getWord32le)
---              <$> getWord32le
               <*> getWord16le
               <*> getWord16le
               <*> getWord16le
@@ -64,7 +63,6 @@ parsePxyabw = MWLSpikeParms
 writeSpikeParms :: MWLSpikeParms -> Put
 writeSpikeParms MWLSpikeParms{..} = do
   putWord32le $ fromIntegral  mwlSParmsID
---  putWord32le $ mwlSParmsID
   putWord16le $ mwlSParmsTpX
   putWord16le $ mwlSParmsTpY
   putWord16le $ mwlSParmsTpA
@@ -83,7 +81,9 @@ produceSpikeParmsFromFile fn = do
     Right (_,dataBytes) -> dropResult $ produceSpikeParms dataBytes
   
 
-produceSpikeParms :: BSL.ByteString -> Producer MWLSpikeParms IO
-                     (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
+--produceSpikeParms :: BSL.ByteString -> Producer MWLSpikeParms IO
+--                     (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
+produceSpikeParms :: BSL.ByteString -> Producer MWLSpikeParms IO ()
 produceSpikeParms b =
-  PBinary.decodeMany (PBS.fromLazy b) >-> PP.map snd
+  dropResult $ getMany PBinary.get (PBS.fromLazy b)
+--  PBinary.decodeMany (PBS.fromLazy b) >-> PP.map snd

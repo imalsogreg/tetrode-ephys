@@ -4,7 +4,7 @@ module Data.Ephys.OldMWL.ParsePFile where
 
 import Data.Ephys.Position
 import Data.Ephys.OldMWL.FileInfo
-import Data.Ephys.OldMWL.Parse (decodeTime, encodeTime, dropResult)
+import Data.Ephys.OldMWL.Parse (decodeTime, encodeTime, dropResult, getMany)
 import Data.Ephys.OldMWL.Header
 
 import Control.Lens
@@ -16,7 +16,7 @@ import Pipes
 import qualified Pipes.Prelude as PP
 import qualified Data.Binary as Binary
 import Data.Binary.Put
-import Data.Binary.Get (getWord32le, getWord16le)
+import Data.Binary.Get (getWord32le, getWord16le, Get(..))
 
 data MWLPos = MWLPos { _mwlPosTime  :: !Double
                      , _mwlPxf      :: !Int
@@ -27,11 +27,16 @@ data MWLPos = MWLPos { _mwlPosTime  :: !Double
 
 $(makeLenses ''MWLPos)
 
-produceMWLPos :: BSL.ByteString ->
-                 Producer MWLPos IO (Either (PBinary.DecodingError,
-                                             Producer BS.ByteString IO ()) ())
-produceMWLPos f = 
-  PBinary.decodeGetMany parsePRecord (PBS.fromLazy . dropHeaderInFirstChunk $ f) >-> PP.map snd
+--produceMWLPos :: BSL.ByteString ->
+--                 Producer MWLPos IO (Either (PBinary.DecodingError,
+--                                             Producer BS.ByteString IO ()) ())
+produceMWLPos :: BSL.ByteString -> Producer MWLPos IO ()
+produceMWLPos f =
+  let bytes = PBS.fromLazy . dropHeaderInFirstChunk $ f
+--      myGet = return :: (Get a) => Get a
+  in
+   dropResult $ getMany Binary.get bytes
+--  view $ PBinary.decoded parsePRecord (PBS.fromLazy . dropHeaderInFirstChunk $ f)
 
 produceMWLPosFromFile :: FilePath -> Producer MWLPos IO ()
 produceMWLPosFromFile fn = do

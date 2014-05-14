@@ -62,8 +62,10 @@ main = do
                           p pos = pos^.mwlPosTime >= tStart
                           source :: P.MonadIO m => P.Producer BSL.ByteString m ()
                           source = do
-                            _ <- P.decodeMany (P.fromLazy remaining) >->
-                                 P.map snd >->
+--                            _ <- P.decodeMany (P.fromLazy remaining) >->
+                            --P.map snd >->
+                            _ <- getMany (P.get) (P.fromLazy remaining) >->
+
                                  P.filter p >->
                                  P.for P.cat P.encode >->
                                  P.map BSL.fromStrict
@@ -78,8 +80,9 @@ main = do
                         where
                           source :: P.MonadIO m => P.Producer BSL.ByteString m ()
                           source = do
-                            _ <- P.decodeGetMany (parseSpike fi) (P.fromLazy remaining) >->
-                                 P.map snd >->
+--                            _ <- P.decodeGetMany (parseSpike fi) (P.fromLazy remaining) >->
+--                                 P.map snd >->
+                            _ <- getMany (parseSpike fi) (P.fromLazy remaining) >->
                                  P.filter (\spike -> mwlSpikeTime spike >= tStart) >->
                                  encodeSpike >->
                                  P.map BSL.fromStrict
@@ -92,8 +95,9 @@ main = do
                     where
                       source :: P.MonadIO m => P.Producer BSL.ByteString m ()
                       source = do
-                        dropResult (P.decodeGetMany (parsePxyabw) (P.fromLazy remaining)) >->
-                          P.map snd >->
+--                        dropResult (P.decodeGetMany (parsePxyabw) (P.fromLazy remaining)) >->
+                        --P.map snd >->
+                        dropResult (getMany parsePxyabw (P.fromLazy remaining)) >->
                           P.filter (\spikeParms -> mwlSParmsTime spikeParms >= tStart) >->
                           bumpIdMaybe resetIds 0 >->
                           encodeSpikeParms >->

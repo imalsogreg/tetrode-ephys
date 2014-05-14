@@ -6,23 +6,28 @@ module Data.Ephys.OldMWL.Parse where
 
 import Data.Ephys.OldMWL.Header
 import Control.Monad (forM_, replicateM, forever)
+--import Control.Monad.Trans.State
 import Data.Maybe (listToMaybe)
 import qualified Data.ByteString.Lazy as BSL hiding (map, any, zipWith)
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import GHC.Int
+import Control.Lens (view)
 import Pipes
 import qualified Pipes.Prelude as PP
 import Data.Binary
 import Data.Binary.Put
 import qualified Pipes.Binary as PBinary hiding (Get)
+import Pipes.Binary (decoded, decodeGetL,decodeGet)
 import Data.Binary.Get (getWord32le, getWord16le)
 import qualified Pipes.ByteString as PBS 
 import qualified Data.Text as T
 import Data.Packed.Matrix
 import qualified Data.List as List
 import Data.Packed.Vector (Vector, toList)
+
+import Pipes.Parse
 
 import qualified Data.Ephys.Spike as Arte
 import Data.Ephys.OldMWL.FileInfo
@@ -122,9 +127,23 @@ parseSpike fi@FileInfo{..}
       return $ MWLSpike (decodeTime ts) vsUVecs
   | otherwise    = error "Failed okFileInfo test"
 
-produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
-produceMWLSpikes fi b = let myGet = parseSpike fi in
-  PBinary.decodeGetMany myGet (PBS.fromLazy . dropHeaderInFirstChunk $ b) >-> PP.map snd
+
+------------------------------------------------------------------------------
+produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO ()
+produceMWLSpikes fi b =
+  let myGet = parseSpike fi :: Get MWLSpike
+      bytes = PBS.fromLazy . dropHeaderInFirstChunk $ b
+  in dropResult (getMany myGet bytes)
+
+getMany :: Monad m => Get a -> Producer PBS.ByteString m r -> Producer a m PBinary.DecodingError
+getMany getA = go
+  where go p = do
+          (x, p') <- lift $ runStateT (decodeGet getA) p
+          case x of
+            Left err -> return err
+            Right a -> do
+              yield a
+              go p'
 
 produceMWLSpikesFromFile :: FilePath -> Producer MWLSpike IO ()
 produceMWLSpikesFromFile fn = do
@@ -136,7 +155,8 @@ produceMWLSpikesFromFile fn = do
     (Right (_,dataBits), Right fi) ->
       dropResult $ produceMWLSpikes fi dataBits
 
-produceTrodeSpikes :: Int -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
+--produceTrodeSpikes :: Int -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
+produceTrodeSpikes :: Int -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO ()
 produceTrodeSpikes tName fi b = produceMWLSpikes fi b >-> PP.map (mwlToArteSpike fi tName)
 
 -- TODO Int to TrodeName

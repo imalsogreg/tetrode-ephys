@@ -37,9 +37,10 @@ Library
     , hashable
     , pipes
     , binary
-    , pipes-parse
-    , pipes-binary
+    , pipes-parse >= 3.0.1
+    , pipes-binary >= 0.4
     , pipes-bytestring
+    , transformers
     , unordered-containers
     , cpu
     , hmatrix
