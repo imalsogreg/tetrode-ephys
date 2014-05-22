@@ -69,7 +69,7 @@ Library
     Data.Ephys.OldMWL.ParseClusterFile
     Data.Ephys.OldMWL.ParsePxyabw
     Data.Ephys.OldMWL.ParsePFile
-
+    Data.Map.KDMap
 
 Executable clusters
   Hs-Source-Dirs: samples
