@@ -133,3 +133,10 @@ Executable posCutHead
                   data-binary-ieee754,
                   cmdargs,
                   tetrode-ephys
+
+Executable drawKD
+  HS-Source-Dirs: utils
+  Main-Is:        drawKD.hs
+  Build-Depends:  base,
+                  gloss,
+                  tetrode-ephys
