@@ -5,22 +5,22 @@ import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 
 drawPoint :: Point2 -> Picture
-drawPoint (Point2 (x,y)) =
+drawPoint (Point2 x y w) =
   translate (realToFrac x) (realToFrac y) $ circle 3.0
 
 data World = World { mainMap   :: KDMap Point2 Int
-                   , selection :: Maybe (Point2,Weight,Int)
+                   , selection :: Maybe (Point2, Int)
                    }
 
 world0 :: World
 world0 = World KDEmpty Nothing
 
 drawTree :: KDMap Point2 a -> Picture
-drawTree = Pictures . map (drawPoint . fst) . keys
+drawTree = Pictures . map (drawPoint) . keys
 
-drawSelection :: Maybe (Point2,Weight,Int) -> [Picture]
+drawSelection :: Maybe (Point2,Int) -> [Picture]
 drawSelection Nothing = []
-drawSelection (Just (Point2 (x,y),w,i)) = [translate (realToFrac x) (realToFrac y) $ circleSolid 3.0]
+drawSelection (Just ((Point2 x y w),i)) = [translate (realToFrac x) (realToFrac y) $ circleSolid 3.0]
 
 drawWorld :: World -> IO Picture
 drawWorld w = return $ Pictures (drawTree (mainMap w) :
@@ -32,9 +32,9 @@ fTime _ w = return w
 fInputs :: Event -> World -> IO World
 fInputs (EventKey (MouseButton LeftButton) Up _ (x,y)) w =
   return $ w { mainMap =
-                  insert (Point2 (realToFrac x, realToFrac y)) 2 1 (mainMap w)}
+                  insert (Point2 (realToFrac x) (realToFrac y) 1) 10 (mainMap w)}
 fInputs (EventKey (MouseButton RightButton) Up _ (x,y)) w =
-  return $ w { selection = closest (mainMap w) (Point2 (realToFrac x,realToFrac y))}
+  return $ w { selection = closest (Point2 (realToFrac x) (realToFrac y) 5) (mainMap w)}
 fInputs _ w = return w
 
 ------------------------------------------------------------------------------
