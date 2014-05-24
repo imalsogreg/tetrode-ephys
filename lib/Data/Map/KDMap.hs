@@ -15,7 +15,7 @@ data KDMap k a = KDEmpty
                deriving (Eq, Show)
 
 newtype Weight = Weight {unWeight :: Double}
-                 deriving (Show, Eq, Num, Enum)
+                 deriving (Show, Eq, Num, Enum, Fractional)
 
 newtype Depth = Depth {unDepth :: Int}
               deriving (Eq,Show,Num,Enum,Integral,Real,Ord)
@@ -56,6 +56,12 @@ instance KDKey Point2 where
   pointSize _    = 2
   pointW p   = p2w p
   dSucc p d = succ d `mod` fromIntegral (pointSize p - 1)
+  dPred p d = pred d `mod` fromIntegral (pointSize p - 1)
+
+toList :: KDMap k a -> [(k,a)]
+toList KDEmpty = []
+toList (KDLeaf k a _) = [(k,a)]
+toList (KDBranch k a _ kdLeft kdRight) = (k,a) : toList kdLeft ++ toList kdRight
 
 closer :: (Eq k, KDKey k) => Maybe (k,a) -> Maybe (k,a) -> k -> Maybe (k,a)
 closer Nothing Nothing _ = Nothing
@@ -65,13 +71,22 @@ closer (Just optA@(kA,_)) (Just optB@(kB,_)) k
   | pointDistSq kA k < pointDistSq kB k = Just optA
   | otherwise                           = Just optB
 
---closest :: (Eq k, KDKey k) => KDMap k a -> k -> Maybe (k,a)
---closest m k = closest' 0 m k Nothing
+delete :: (Eq k, KDKey k) => k -> KDMap k a -> KDMap k a
+delete _ KDEmpty = KDEmpty
+delete k m@(KDLeaf k' _ _)
+  | k == k'   = KDEmpty
+--  | otherwise = KDEmpty -- TODO really?
+  | otherwise = m
+delete k (KDBranch k' _ d kdLeft kdRight)
+  | k == k' = fromListWithDepth d (toList kdLeft ++ toList kdRight)
+delete k (KDBranch k' a' d kdLeft kdRight) = case dimOrder k k' d of
+  LT -> KDBranch k' a' d (delete k kdLeft) kdRight
+  _  -> KDBranch k' a' d kdLeft (delete k kdRight)
 
 closest :: (Eq a, Eq k, KDKey k) => k -> KDMap k a -> Maybe (k,a)
 closest _ KDEmpty = Nothing
 closest _ (KDLeaf k' a' _) = Just (k',a')
-closest k m@(KDBranch k' a' d' kdLeft kdRight) = case dimOrder k k' d' of
+closest k (KDBranch k' a' d' kdLeft kdRight) = case dimOrder k k' d' of
   LT -> findNearest kdLeft  kdRight
   _  -> findNearest kdRight kdLeft
   where
@@ -80,12 +95,10 @@ closest k m@(KDBranch k' a' d' kdLeft kdRight) = case dimOrder k k' d' of
             Nothing  -> [(k',a')]
             Just (k'',a'') -> [(k',a'),(k'',a'')]
           otherCandidates
-            | (pointDistSq k k') >= (pointD k d' - pointD k' d')^2 =
+            | (pointDistSq k k') >= (pointD k d' - pointD k' d')^(2::Int) =
               maybeToList (closest k treeB)
             | otherwise = []
-      in
-       Just $
-         L.minimumBy (comparing (pointDistSq k . fst))
+      in Just $ L.minimumBy (comparing (pointDistSq k . fst))
          (mainCandidates ++ otherCandidates)
 
 fromListWithDepth :: (KDKey k) => Depth -> [(k,a)] -> KDMap k a
@@ -100,94 +113,20 @@ fromListWithDepth d ps@((k,_):_) = node'
     kdRight = fromListWithDepth (dSucc k d) (drop (medInd + 1) psSort)
     node' = KDBranch kMed aMed d kdLeft kdRight
 
-closest' :: (Eq a, Eq k, KDKey k) => k -> [KDMap k a] -> Maybe (k,a) -> Maybe (k,a)
-closest' k [] closestSoFar = closestSoFar
-closest' k [KDEmpty] closestSoFar = closestSoFar
-closest' k ((KDLeaf k' a' d') : ms) cl@(Just(closestK, closestA)) =
-  closest' k ms (closer (Just (k',a')) cl k )
-closest' k ((KDLeaf k' a' d') :ms) Nothing = closest' k ms (Just (k', a'))
-closest' k ((KDBranch k' a' d kdLeft kdRight) : ms) Nothing =
-  closest' k ms (Just (k',a'))
-closest' k ((b@(KDBranch k' a' d' kdLeft kdRight)) : ms) cl@(Just (closestSoFar,a))
-  | (pointD k d' - pointD k' d')^(2::Int) > pointDistSq k closestSoFar =
-    closest' k ms cl  -- TODO: Is this right? Or do I have to check that closestSoFar is closer than k'?
-  | otherwise = let otherTree = if b == kdLeft then kdRight else kdLeft
-                in closest' k ms (closer cl (closest k otherTree) k)
-
-
-descent' :: (Eq k, KDKey k) => k -> KDMap k a -> [KDMap k a] -> [KDMap k a]
-descent' _    KDEmpty acc = acc
-descent' _ l@(KDLeaf _ _ _) acc = l : acc
-descent' k b@(KDBranch k' _ d' kdLeft kdRight) acc = case dimOrder k k' d' of
-  LT -> descent' k kdLeft  (b:acc)
-  _  -> descent' k kdRight (b:acc)
-
-{-
-descent' :: (Eq k, KDKey k) => Depth -> k -> KDMap k a -> [(Depth,KDMap k a)] -> [(Depth, KDMap k a)]
-descent' _ k KDEmpty acc = acc
-descent' d k l@(KDLeaf _ _) acc = (d,l) : acc
-descent' d k b@(KDBranch k' v' kdLeft kdRight) acc = case dimOrder k k' d of
-  LT -> descent' (dSucc k d) k kdLeft  ((d,b):acc)
-  _  -> descent' (dSucc k d) k kdRight ((d,b):acc)
--}
-
 keys :: KDMap k a -> [k]
 keys  KDEmpty                        = []
 keys (KDLeaf k _ _ )                 = [k]
 keys (KDBranch k _ _ kdLeft kdRight) = k : (keys kdLeft ++ keys kdRight)
 
-insert :: (Eq k, KDKey k) => k -> a -> KDMap k a -> KDMap k a
-insert = insert'
-
-insert' :: (Eq k, KDKey k) => k -> a -> KDMap k a -> KDMap k a
-insert' k a KDEmpty = KDLeaf k a 0
-insert' k a (KDLeaf k' a' d') = case dimOrder k k' d' of
-  EQ -> KDLeaf k  a  d'
-  LT -> KDBranch k' a' d' (KDLeaf k a (dSucc k d')) KDEmpty
-  GT -> KDBranch k' a' d' KDEmpty (KDLeaf k a (dSucc k d'))
-insert' k a (KDBranch k' a' d' kdLeft kdRight) = case dimOrder k k' d' of
-  LT -> KDBranch k' a' d' (insert' k a kdLeft) kdRight
-  _  -> KDBranch k' a' d' kdLeft (insert' k a kdRight)
-  
-{-
-insert' :: (Eq k, KDKey k) => Depth -> k -> a -> KDMap k a -> KDMap k a
-insert' d k v  KDEmpty = KDLeaf d k v
-insert' d k v (KDLeaf k' v')
-  | k == k' = KDLeaf k v'
-  | pointD k d < pointD k' d =
-    KDBranch dim k' v' (KDLeaf  (dSucc k d) k v) KDEmpty
-  | otherwise =
-    KDBranch dim k' v' KDEmpty (KDLeaf (dSucc k v) k v)
-insert' _ k w v (KDBranch dim w' k' v' kdLeft kdRight)
-  | k == k' = KDBranch dim w k' v kdLeft kdRight
-  | pointD k dim < pointD k' dim =
-    KDBranch dim w' k' v' (insert' (dim + 1 `mod` pointSize k - 1) k w v kdLeft) kdRight
-  | otherwise =
-    KDBranch dim w' k' v' kdLeft (insert' (dim+1 `mod` pointSize k - 1) k w v kdRight)
--}
-
-
-
-
-{-
-instance Fractional Weight where
-  Weight a / Weight b = Weight $ a / b
-  recip (Weight a) = Weight $ recip a
-  fromRational a = Weight $ fromRational a
-
-instance Num Weight where
-  Weight a + Weight b = Weight $ a + b
-  Weight a - Weight b = Weight $ a - b
-  Weight a * Weight b = Weight $ a * b
-  negate (Weight a) = Weight $ negate a
-  abs (Weight a) = Weight $ abs a
-  signum (Weight a) = Weight $ signum a
-  fromInteger a = Weight (fromIntegral a)
-
-instance Floating Weight where
-  Weight a ** Weight b = Weight $ a ** b
-  sqrt (Weight a) = Weight $ sqrt a
-  exp  (Weight a) = Weight $ exp a
-  log  (Weight a) = Weight $ log a
-  Weight a `logBase` Weight b = Weight $ logBase a b
--}
+insert :: (Eq k, KDKey k) => Depth -> k -> a -> KDMap k a -> KDMap k a
+insert d k a KDEmpty = KDLeaf k a d
+insert _ k a (KDLeaf k' a' d')
+  | k == k' = KDLeaf k a d'
+  | otherwise = case dimOrder k k' d' of
+    LT -> KDBranch k' a' d' (KDLeaf k a (dSucc k d')) KDEmpty
+    _  -> KDBranch k' a' d' KDEmpty (KDLeaf k a (dSucc k d'))
+insert _ k a (KDBranch k' a' d' kdLeft kdRight)
+  | k == k' = KDBranch k a d' kdLeft kdRight
+  | otherwise = case dimOrder k k' d' of
+    LT -> KDBranch k' a' d' (insert (dSucc k d') k a kdLeft) kdRight
+    _  -> KDBranch k' a' d' kdLeft (insert (dSucc k d') k a kdRight)

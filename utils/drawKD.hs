@@ -1,6 +1,8 @@
 module Main where
 
+import Control.Applicative
 import Data.Map.KDMap
+import Debug.Trace
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 
@@ -32,9 +34,16 @@ fTime _ w = return w
 fInputs :: Event -> World -> IO World
 fInputs (EventKey (MouseButton LeftButton) Up _ (x,y)) w =
   return $ w { mainMap =
-                  insert (Point2 (realToFrac x) (realToFrac y) 1) 10 (mainMap w)}
+                  insert 0 (Point2 (realToFrac x) (realToFrac y) 1.0) 10 (mainMap w)}
 fInputs (EventKey (MouseButton RightButton) Up _ (x,y)) w =
   return $ w { selection = closest (Point2 (realToFrac x) (realToFrac y) 5) (mainMap w)}
+fInputs (EventKey (MouseButton MiddleButton) Up _ (x,y)) w =
+  return $ w { selection = Nothing
+             , mainMap = maybe (mainMap w)
+                         (\p -> delete (fst p) (mainMap w))
+                         (closest (Point2 (realToFrac x) (realToFrac y) 1.0) (mainMap w))
+             }
+
 fInputs _ w = return w
 
 ------------------------------------------------------------------------------
