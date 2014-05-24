@@ -3,6 +3,8 @@
 
 module Data.Map.KDMap where
 
+import Data.Maybe (maybeToList)
+import qualified Data.List as L
 import Data.Ord (comparing)
 import qualified Data.Foldable as F
 
@@ -69,24 +71,34 @@ closer (Just optA@(kA,_)) (Just optB@(kB,_)) k
 closest :: (Eq a, Eq k, KDKey k) => k -> KDMap k a -> Maybe (k,a)
 closest _ KDEmpty = Nothing
 closest _ (KDLeaf k' a' _) = Just (k',a')
-closest k m@(KDBranch _ _ _ _ _) = let path = descent' k m []
-                                   in closest' k path Nothing
+closest k m@(KDBranch k' a' d' kdLeft kdRight) = case dimOrder k k' d' of
+  LT -> findNearest kdLeft  kdRight
+  _  -> findNearest kdRight kdLeft
+  where
+    findNearest treeA treeB =
+      let mainCandidates = case closest k treeA of
+            Nothing  -> [(k',a')]
+            Just (k'',a'') -> [(k',a'),(k'',a'')]
+          otherCandidates
+            | (pointDistSq k k') >= (pointD k d' - pointD k' d')^2 =
+              maybeToList (closest k treeB)
+            | otherwise = []
+      in
+       Just $
+         L.minimumBy (comparing (pointDistSq k . fst))
+         (mainCandidates ++ otherCandidates)
 
-{-
-closest' :: (Eq a, Eq k, KDKey k) => Depth -> k -> [KDMap k a] -> Maybe (k,a) -> Maybe (k,a)
-closest' d k [] closestSoFar = closestSoFar
-closest' d k [KDEmpty] closestSoFar = closestSoFar
-closest' d k ((KDLeaf k' a') : ms) cl@(Just(closestK, closestA)) =
-  closest' (dPred k d) k ms (closer (Just (k',a')) cl k )
-closest' d k ((KDLeaf k' a') :ms) Nothing = closest' (dSucc k d)k ms (Just (k', a'))
-closest' d k ((KDBranch k' a' kdLeft kdRight) : ms) Nothing =
-  closest' (dPred k d) k ms (Just (k',a'))
-closest' d k ((b@(KDBranch k' a' kdLeft kdRight)) : ms) cl@(Just (closestSoFar,a))
-  | (pointD k d - pointD k' d)^(2::Int) > pointDistSq k closestSoFar =
-    closest' (dPred k d) k ms cl  -- TODO: Is this right? Or do I have to check that closestSoFar is closer than k'?
-  | otherwise = let otherTree = if b == kdLeft then kdRight else kdLeft
-                in closer cl (closest (dSucc k d) k otherTree) k
--}
+fromListWithDepth :: (KDKey k) => Depth -> [(k,a)] -> KDMap k a
+fromListWithDepth _ [] = KDEmpty
+fromListWithDepth d [(k,a)] = KDLeaf k a d
+fromListWithDepth d ps@((k,_):_) = node'
+  where
+    psSort = L.sortBy (comparing (flip pointD d . fst)) ps
+    medInd = L.length psSort `div` 2
+    (kMed,aMed) = psSort !! medInd
+    kdLeft  = fromListWithDepth (dSucc k d) (take medInd psSort)
+    kdRight = fromListWithDepth (dSucc k d) (drop (medInd + 1) psSort)
+    node' = KDBranch kMed aMed d kdLeft kdRight
 
 closest' :: (Eq a, Eq k, KDKey k) => k -> [KDMap k a] -> Maybe (k,a) -> Maybe (k,a)
 closest' k [] closestSoFar = closestSoFar
