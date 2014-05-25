@@ -35,14 +35,14 @@ fTime _ w = return w
 fInputs :: Event -> World -> IO World
 fInputs (EventKey (MouseButton LeftButton) Up _ (x,y)) w = do
   let newMap = insert 0 (Point2 (realToFrac x) (realToFrac y) 1.0) 10 (mainMap w)
---  unless (isValid newMap) (print $ show newMap)
+  unless (isValid newMap) (putStrLn $ "INVALID after insert: " ++ show newMap)
   return $ w { mainMap = newMap }
 fInputs (EventKey (MouseButton RightButton) Up _ (x,y)) w =
   return $ w { selection = closest (Point2 (realToFrac x) (realToFrac y) 5) (mainMap w)}
 fInputs (EventKey (MouseButton MiddleButton) Up _ (x,y)) w = do
-  let newMap = maybe (mainMap w) (\p -> delete' (fst p) (mainMap w))
+  let newMap = maybe (mainMap w) (\p -> delete (fst p) (mainMap w))
                (closest (Point2 (realToFrac x) (realToFrac y) 1.0) (mainMap w))
---  unless (isValid newMap) (print $ show newMap)
+  unless (isValid newMap) (print $ "INVALID after delete: " ++ show newMap)
   return $ w { selection = Nothing, mainMap = newMap }
 
 fInputs _ w = return w

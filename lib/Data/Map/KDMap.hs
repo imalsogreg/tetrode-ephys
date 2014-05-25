@@ -8,7 +8,6 @@ import Data.Maybe (maybeToList)
 import qualified Data.List as L
 import Data.Ord (comparing)
 import qualified Data.Foldable as F
-import Debug.Trace
 
 data KDMap k a = KDEmpty
                | KDLeaf   k a Depth
@@ -81,11 +80,13 @@ delete k m@(KDLeaf k' _ _)
 delete k (KDBranch k' a' d kdLeft kdRight)
   | k == k' = fromListWithDepth d (toList kdLeft ++ toList kdRight)
   | otherwise = trace ("delete Branch") $ case dimOrder k k' d of
-    LT -> KDBranch k' a' d (delete k kdLeft) kdRight
-    _  -> KDBranch k' a' d kdLeft (delete k kdRight)
+    EQ -> KDBranch k' a' d (delete k kdLeft) (delete k kdRight)
+    LT -> KDBranch k' a' d (delete k kdLeft)  kdRight
+    GT -> KDBranch k' a' d  kdLeft           (delete k kdRight)
+
 
 delete' :: (Show k, Eq k, KDKey k, Eq a) => k -> KDMap k a -> KDMap k a
-delete' k KDEmpty = KDEmpty
+delete' _ KDEmpty = KDEmpty
 delete' k l@(KDLeaf k' _ _)
   | k == k' = KDEmpty
   | otherwise = l
@@ -119,10 +120,10 @@ closest k (KDBranch k' a' d' kdLeft kdRight) = case dimOrder k k' d' of
 isValid :: (Eq k, KDKey k,Show a,Show k) => KDMap k a -> Bool
 isValid KDEmpty = True
 isValid (KDLeaf _ _ _) = True
-isValid b@(KDBranch k _ d kdLeft kdRight) = trace (show b) $ thisValid && isValid kdLeft && isValid kdRight
-  where thisValid = all (\(k',_) -> dimOrder k k' d /= LT) (toList kdLeft)
+isValid (KDBranch k _ d kdLeft kdRight) = thisValid && isValid kdLeft && isValid kdRight
+  where thisValid = all (\(k',_) -> dimOrder k' k d == LT) (toList kdLeft)
                     &&
-                    all (\(k',_) -> dimOrder k k' d == LT) (toList kdRight)
+                    all (\(k',_) -> dimOrder k' k d /= LT) (toList kdRight)
 
 fromListWithDepth :: (KDKey k) => Depth -> [(k,a)] -> KDMap k a
 fromListWithDepth _ [] = KDEmpty
@@ -143,13 +144,13 @@ keys (KDBranch k _ _ kdLeft kdRight) = k : (keys kdLeft ++ keys kdRight)
 
 insert :: (Eq k, KDKey k) => Depth -> k -> a -> KDMap k a -> KDMap k a
 insert d k a KDEmpty = KDLeaf k a d
-insert d k a (KDLeaf k' a' d')
-  | k == k' = trace (if d /= d' then "LEAF k EQ depth disagreement\n" else "") (KDLeaf k a d')
+insert _ k a (KDLeaf k' a' d')
+  | k == k' = KDLeaf k a d'
   | otherwise = case dimOrder k k' d' of
-    LT -> trace (if d /= d' then "LEAF LT CASE depth disagreement\n" else "") $ KDBranch k' a' d' (KDLeaf k a (dSucc k d')) KDEmpty
-    _  -> trace (if d /= d' then "LEAF LT CASE depth disagreement\n" else "") $ KDBranch k' a' d' KDEmpty (KDLeaf k a (dSucc k d'))
-insert d k a (KDBranch k' a' d' kdLeft kdRight)
-  | k == k' = trace (if d /= d' then "BRANCH EQ CASE depth disagreement\n" else "") $ KDBranch k a d' kdLeft kdRight
+    LT -> KDBranch k' a' d' (KDLeaf k a (dSucc k d')) KDEmpty
+    _  -> KDBranch k' a' d' KDEmpty (KDLeaf k a (dSucc k d'))
+insert _ k a (KDBranch k' a' d' kdLeft kdRight)
+  | k == k' = KDBranch k a d' kdLeft kdRight
   | otherwise = case dimOrder k k' d' of
-    LT -> trace (if d /= d' then "BRANCH LT CASE. d' is " ++ show d' ++ " dsucc is " ++ show (dSucc k d') ++ "depth disagreement\n" else "") $ KDBranch k' a' d' (insert (dSucc k d') k a kdLeft) kdRight
-    _  -> trace (if d /= d' then "BRANCH EQ|GT CASE depth disagreement\n" else "") $ KDBranch k' a' d' kdLeft (insert (dSucc k d') k a kdRight)
+    LT -> KDBranch k' a' d' (insert (dSucc k d') k a kdLeft) kdRight
+    _  -> KDBranch k' a' d' kdLeft (insert (dSucc k d') k a kdRight)
