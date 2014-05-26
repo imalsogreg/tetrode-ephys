@@ -1,0 +1,18 @@
+Configuring stm-2.4.3...
+Building stm-2.4.3...
+Preprocessing library stm-2.4.3...
+[ 1 of 10] Compiling Control.Sequential.STM ( Control/Sequential/STM.hs, dist/dist-sandbox-71d48313/build/Control/Sequential/STM.o )
+[ 2 of 10] Compiling Control.Concurrent.STM.TBQueue ( Control/Concurrent/STM/TBQueue.hs, dist/dist-sandbox-71d48313/build/Control/Concurrent/STM/TBQueue.o )
+[ 3 of 10] Compiling Control.Concurrent.STM.TQueue ( Control/Concurrent/STM/TQueue.hs, dist/dist-sandbox-71d48313/build/Control/Concurrent/STM/TQueue.o )
+[ 4 of 10] Compiling Control.Concurrent.STM.TChan ( Control/Concurrent/STM/TChan.hs, dist/dist-sandbox-71d48313/build/Control/Concurrent/STM/TChan.o )
+[ 5 of 10] Compiling Control.Concurrent.STM.TMVar ( Control/Concurrent/STM/TMVar.hs, dist/dist-sandbox-71d48313/build/Control/Concurrent/STM/TMVar.o )
+[ 6 of 10] Compiling Control.Concurrent.STM.TVar ( Control/Concurrent/STM/TVar.hs, dist/dist-sandbox-71d48313/build/Control/Concurrent/STM/TVar.o )
+[ 7 of 10] Compiling Control.Concurrent.STM.TArray ( Control/Concurrent/STM/TArray.hs, dist/dist-sandbox-71d48313/build/Control/Concurrent/STM/TArray.o )
+[ 8 of 10] Compiling Control.Monad.STM ( Control/Monad/STM.hs, dist/dist-sandbox-71d48313/build/Control/Monad/STM.o )
+[ 9 of 10] Compiling Control.Concurrent.STM ( Control/Concurrent/STM.hs, dist/dist-sandbox-71d48313/build/Control/Concurrent/STM.o )
+[10 of 10] Compiling Control.Concurrent.STM.TSem ( Control/Concurrent/STM/TSem.hs, dist/dist-sandbox-71d48313/build/Control/Concurrent/STM/TSem.o )
+In-place registering stm-2.4.3...
+Creating package registration file: /tmp/pkgConf-stm-2.425409.3
+Installing library in
+/home/greghale/Programming/haskell/haskell-tetrode-ephys/.cabal-sandbox/lib/x86_64-linux-ghc-7.6.3/stm-2.4.3
+Registering stm-2.4.3...

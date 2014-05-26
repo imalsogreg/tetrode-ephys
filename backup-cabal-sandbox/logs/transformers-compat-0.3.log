@@ -1,0 +1,16 @@
+Configuring transformers-compat-0.3...
+Building transformers-compat-0.3...
+Preprocessing library transformers-compat-0.3...
+[1 of 8] Compiling Paths_transformers_compat ( dist/dist-sandbox-71d48313/build/autogen/Paths_transformers_compat.hs, dist/dist-sandbox-71d48313/build/Paths_transformers_compat.o )
+[2 of 8] Compiling Control.Monad.Signatures ( 0.3/Control/Monad/Signatures.hs, dist/dist-sandbox-71d48313/build/Control/Monad/Signatures.o )
+[3 of 8] Compiling Data.Functor.Classes ( 0.3/Data/Functor/Classes.hs, dist/dist-sandbox-71d48313/build/Data/Functor/Classes.o )
+[4 of 8] Compiling Control.Applicative.Lift ( 0.2/Control/Applicative/Lift.hs, dist/dist-sandbox-71d48313/build/Control/Applicative/Lift.o )
+[5 of 8] Compiling Control.Monad.Trans.Except ( 0.3/Control/Monad/Trans/Except.hs, dist/dist-sandbox-71d48313/build/Control/Monad/Trans/Except.o )
+[6 of 8] Compiling Data.Functor.Sum ( 0.3/Data/Functor/Sum.hs, dist/dist-sandbox-71d48313/build/Data/Functor/Sum.o )
+[7 of 8] Compiling Control.Applicative.Backwards ( 0.2/Control/Applicative/Backwards.hs, dist/dist-sandbox-71d48313/build/Control/Applicative/Backwards.o )
+[8 of 8] Compiling Data.Functor.Reverse ( 0.2/Data/Functor/Reverse.hs, dist/dist-sandbox-71d48313/build/Data/Functor/Reverse.o )
+In-place registering transformers-compat-0.3...
+Creating package registration file: /tmp/pkgConf-transformers-compat-025409.3
+Installing library in
+/home/greghale/Programming/haskell/haskell-tetrode-ephys/.cabal-sandbox/lib/x86_64-linux-ghc-7.6.3/transformers-compat-0.3
+Registering transformers-compat-0.3...

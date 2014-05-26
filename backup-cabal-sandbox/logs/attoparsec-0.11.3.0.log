@@ -1,0 +1,30 @@
+Configuring attoparsec-0.11.3.0...
+Building attoparsec-0.11.3.0...
+Preprocessing library attoparsec-0.11.3.0...
+[ 1 of 18] Compiling Data.Attoparsec.Text.FastSet ( Data/Attoparsec/Text/FastSet.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Text/FastSet.o )
+[ 2 of 18] Compiling Data.Attoparsec.Zepto ( Data/Attoparsec/Zepto.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Zepto.o )
+[ 3 of 18] Compiling Data.Attoparsec.Number ( Data/Attoparsec/Number.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Number.o )
+[ 4 of 18] Compiling Data.Attoparsec.ByteString.FastSet ( Data/Attoparsec/ByteString/FastSet.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/ByteString/FastSet.o )
+[ 5 of 18] Compiling Data.Attoparsec.Internal.Types ( Data/Attoparsec/Internal/Types.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Internal/Types.o )
+[ 6 of 18] Compiling Data.Attoparsec.Types ( Data/Attoparsec/Types.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Types.o )
+[ 7 of 18] Compiling Data.Attoparsec.Internal ( Data/Attoparsec/Internal.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Internal.o )
+[ 8 of 18] Compiling Data.Attoparsec.Combinator ( Data/Attoparsec/Combinator.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Combinator.o )
+[ 9 of 18] Compiling Data.Attoparsec.ByteString.Internal ( Data/Attoparsec/ByteString/Internal.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/ByteString/Internal.o )
+[10 of 18] Compiling Data.Attoparsec.Text.Internal ( Data/Attoparsec/Text/Internal.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Text/Internal.o )
+[11 of 18] Compiling Data.Attoparsec.Text ( Data/Attoparsec/Text.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Text.o )
+[12 of 18] Compiling Data.Attoparsec.Text.Lazy ( Data/Attoparsec/Text/Lazy.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Text/Lazy.o )
+
+Data/Attoparsec/Text/Lazy.hs:38:1: Warning:
+    Module `Data.Text.Lazy.Internal' is deprecated:
+      Use Data.Text.Internal.Lazy instead
+[13 of 18] Compiling Data.Attoparsec.ByteString ( Data/Attoparsec/ByteString.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/ByteString.o )
+[14 of 18] Compiling Data.Attoparsec.ByteString.Char8 ( Data/Attoparsec/ByteString/Char8.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/ByteString/Char8.o )
+[15 of 18] Compiling Data.Attoparsec.Char8 ( Data/Attoparsec/Char8.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Char8.o )
+[16 of 18] Compiling Data.Attoparsec.ByteString.Lazy ( Data/Attoparsec/ByteString/Lazy.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/ByteString/Lazy.o )
+[17 of 18] Compiling Data.Attoparsec.Lazy ( Data/Attoparsec/Lazy.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec/Lazy.o )
+[18 of 18] Compiling Data.Attoparsec  ( Data/Attoparsec.hs, dist/dist-sandbox-71d48313/build/Data/Attoparsec.o )
+In-place registering attoparsec-0.11.3.0...
+Creating package registration file: /tmp/pkgConf-attoparsec-0.11.325409.0
+Installing library in
+/home/greghale/Programming/haskell/haskell-tetrode-ephys/.cabal-sandbox/lib/x86_64-linux-ghc-7.6.3/attoparsec-0.11.3.0
+Registering attoparsec-0.11.3.0...

@@ -1,0 +1,21 @@
+Configuring bifunctors-4.1.1.1...
+Building bifunctors-4.1.1.1...
+Preprocessing library bifunctors-4.1.1.1...
+[ 1 of 13] Compiling Data.Bifoldable  ( src/Data/Bifoldable.hs, dist/dist-sandbox-71d48313/build/Data/Bifoldable.o )
+[ 2 of 13] Compiling Data.Semigroup.Bifoldable ( src/Data/Semigroup/Bifoldable.hs, dist/dist-sandbox-71d48313/build/Data/Semigroup/Bifoldable.o )
+[ 3 of 13] Compiling Data.Bifunctor   ( src/Data/Bifunctor.hs, dist/dist-sandbox-71d48313/build/Data/Bifunctor.o )
+[ 4 of 13] Compiling Data.Bifunctor.Apply ( src/Data/Bifunctor/Apply.hs, dist/dist-sandbox-71d48313/build/Data/Bifunctor/Apply.o )
+[ 5 of 13] Compiling Data.Bitraversable ( src/Data/Bitraversable.hs, dist/dist-sandbox-71d48313/build/Data/Bitraversable.o )
+[ 6 of 13] Compiling Data.Semigroup.Bitraversable ( src/Data/Semigroup/Bitraversable.hs, dist/dist-sandbox-71d48313/build/Data/Semigroup/Bitraversable.o )
+[ 7 of 13] Compiling Data.Biapplicative ( src/Data/Biapplicative.hs, dist/dist-sandbox-71d48313/build/Data/Biapplicative.o )
+[ 8 of 13] Compiling Data.Bifunctor.Clown ( src/Data/Bifunctor/Clown.hs, dist/dist-sandbox-71d48313/build/Data/Bifunctor/Clown.o )
+[ 9 of 13] Compiling Data.Bifunctor.Flip ( src/Data/Bifunctor/Flip.hs, dist/dist-sandbox-71d48313/build/Data/Bifunctor/Flip.o )
+[10 of 13] Compiling Data.Bifunctor.Join ( src/Data/Bifunctor/Join.hs, dist/dist-sandbox-71d48313/build/Data/Bifunctor/Join.o )
+[11 of 13] Compiling Data.Bifunctor.Joker ( src/Data/Bifunctor/Joker.hs, dist/dist-sandbox-71d48313/build/Data/Bifunctor/Joker.o )
+[12 of 13] Compiling Data.Bifunctor.Product ( src/Data/Bifunctor/Product.hs, dist/dist-sandbox-71d48313/build/Data/Bifunctor/Product.o )
+[13 of 13] Compiling Data.Bifunctor.Wrapped ( src/Data/Bifunctor/Wrapped.hs, dist/dist-sandbox-71d48313/build/Data/Bifunctor/Wrapped.o )
+In-place registering bifunctors-4.1.1.1...
+Creating package registration file: /tmp/pkgConf-bifunctors-4.1.125409.1
+Installing library in
+/home/greghale/Programming/haskell/haskell-tetrode-ephys/.cabal-sandbox/lib/x86_64-linux-ghc-7.6.3/bifunctors-4.1.1.1
+Registering bifunctors-4.1.1.1...

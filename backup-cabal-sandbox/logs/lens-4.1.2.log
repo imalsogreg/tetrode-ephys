@@ -1,0 +1,138 @@
+[1 of 1] Compiling Main             ( /tmp/lens-4.1.2-25409/lens-4.1.2/dist/dist-sandbox-71d48313/setup/setup.hs, /tmp/lens-4.1.2-25409/lens-4.1.2/dist/dist-sandbox-71d48313/setup/Main.o )
+Linking /tmp/lens-4.1.2-25409/lens-4.1.2/dist/dist-sandbox-71d48313/setup/setup ...
+Configuring lens-4.1.2...
+Building lens-4.1.2...
+Preprocessing library lens-4.1.2...
+[ 1 of 85] Compiling Data.Map.Lens    ( src/Data/Map/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Map/Lens.o )
+[ 2 of 85] Compiling Control.Lens.Internal.TH ( src/Control/Lens/Internal/TH.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/TH.o )
+[ 3 of 85] Compiling Control.Lens.Internal.Reflection ( src/Control/Lens/Internal/Reflection.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Reflection.o )
+Loading package ghc-prim ... linking ... done.
+Loading package integer-gmp ... linking ... done.
+Loading package base ... linking ... done.
+Loading package array-0.4.0.1 ... linking ... done.
+Loading package deepseq-1.3.0.1 ... linking ... done.
+Loading package bytestring-0.10.0.2 ... linking ... done.
+Loading package zlib-0.5.4.1 ... linking ... done.
+Loading package text-1.1.1.2 ... linking ... done.
+Loading package hashable-1.2.2.0 ... linking ... done.
+Loading package containers-0.5.0.0 ... linking ... done.
+Loading package nats-0.2 ... linking ... done.
+Loading package unordered-containers-0.2.4.0 ... linking ... done.
+Loading package semigroups-0.14 ... linking ... done.
+Loading package void-0.6.1 ... linking ... done.
+Loading package utf8-string-0.3.7 ... linking ... done.
+Loading package split-0.2.2 ... linking ... done.
+Loading package tagged-0.7.2 ... linking ... done.
+Loading package pretty-1.1.1.0 ... linking ... done.
+Loading package template-haskell ... linking ... done.
+Loading package reflection-1.4 ... linking ... done.
+Loading package parallel-3.2.0.4 ... linking ... done.
+Loading package transformers-0.2.2.1 ... linking ... done.
+Loading package transformers-compat-0.3 ... linking ... done.
+Loading package contravariant-0.6 ... linking ... done.
+Loading package distributive-0.4.4 ... linking ... done.
+Loading package comonad-4.2 ... linking ... done.
+Loading package semigroupoids-4.0.2 ... linking ... done.
+Loading package bifunctors-4.1.1.1 ... linking ... done.
+Loading package mtl-2.0.1.1 ... linking ... done.
+Loading package prelude-extras-0.4 ... linking ... done.
+Loading package profunctors-4.0.4 ... linking ... done.
+Loading package free-4.7.1 ... linking ... done.
+Loading package filepath-1.3.0.1 ... linking ... done.
+Loading package exceptions-0.6.1 ... linking ... done.
+Loading package scientific-0.2.0.2 ... linking ... done.
+Loading package attoparsec-0.11.3.0 ... linking ... done.
+Loading package dlist-0.7.0.1 ... linking ... done.
+Loading package old-locale-1.0.0.5 ... linking ... done.
+Loading package syb-0.4.1 ... linking ... done.
+Loading package time-1.4.0.1 ... linking ... done.
+Loading package primitive-0.5.3.0 ... linking ... done.
+Loading package vector-0.10.9.1 ... linking ... done.
+Loading package aeson-0.7.0.3 ... linking ... done.
+[ 4 of 85] Compiling Control.Lens.Internal.Instances ( src/Control/Lens/Internal/Instances.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Instances.o )
+[ 5 of 85] Compiling Control.Lens.Internal.Setter ( src/Control/Lens/Internal/Setter.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Setter.o )
+[ 6 of 85] Compiling Control.Lens.Internal.Review ( src/Control/Lens/Internal/Review.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Review.o )
+[ 7 of 85] Compiling Control.Lens.Internal.Prism ( src/Control/Lens/Internal/Prism.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Prism.o )
+[ 8 of 85] Compiling Control.Lens.Internal.Iso ( src/Control/Lens/Internal/Iso.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Iso.o )
+[ 9 of 85] Compiling Control.Lens.Internal.Level ( src/Control/Lens/Internal/Level.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Level.o )
+[10 of 85] Compiling Control.Lens.Internal.TupleIxedTH ( src/Control/Lens/Internal/TupleIxedTH.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/TupleIxedTH.o )
+[11 of 85] Compiling Control.Lens.Internal.Indexed ( src/Control/Lens/Internal/Indexed.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Indexed.o )
+[12 of 85] Compiling Control.Lens.Internal.Context ( src/Control/Lens/Internal/Context.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Context.o )
+[13 of 85] Compiling Control.Lens.Internal.Bazaar ( src/Control/Lens/Internal/Bazaar.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Bazaar.o )
+[14 of 85] Compiling Control.Lens.Internal.Magma ( src/Control/Lens/Internal/Magma.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Magma.o )
+[15 of 85] Compiling Control.Lens.Internal.Action ( src/Control/Lens/Internal/Action.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Action.o )
+[16 of 85] Compiling Control.Lens.Internal.Getter ( src/Control/Lens/Internal/Getter.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Getter.o )
+[17 of 85] Compiling Control.Lens.Internal.Fold ( src/Control/Lens/Internal/Fold.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Fold.o )
+[18 of 85] Compiling Control.Lens.Internal.Zoom ( src/Control/Lens/Internal/Zoom.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Zoom.o )
+[19 of 85] Compiling Control.Lens.Type ( src/Control/Lens/Type.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Type.o )
+[20 of 85] Compiling Control.Lens.Setter ( src/Control/Lens/Setter.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Setter.o )
+[21 of 85] Compiling Control.Lens.Lens ( src/Control/Lens/Lens.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Lens.o )
+[22 of 85] Compiling Control.Lens.Loupe ( src/Control/Lens/Loupe.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Loupe.o )
+[23 of 85] Compiling Control.Lens.Tuple ( src/Control/Lens/Tuple.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Tuple.o )
+[24 of 85] Compiling Control.Lens.Getter ( src/Control/Lens/Getter.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Getter.o )
+[25 of 85] Compiling Control.Lens.Review ( src/Control/Lens/Review.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Review.o )
+[26 of 85] Compiling Control.Lens.Prism ( src/Control/Lens/Prism.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Prism.o )
+[27 of 85] Compiling Control.Lens.Zoom ( src/Control/Lens/Zoom.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Zoom.o )
+[28 of 85] Compiling Data.Set.Lens    ( src/Data/Set/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Set/Lens.o )
+[29 of 85] Compiling Data.HashSet.Lens ( src/Data/HashSet/Lens.hs, dist/dist-sandbox-71d48313/build/Data/HashSet/Lens.o )
+[30 of 85] Compiling Control.Lens.Fold ( src/Control/Lens/Fold.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Fold.o )
+[31 of 85] Compiling Control.Lens.Traversal ( src/Control/Lens/Traversal.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Traversal.o )
+[32 of 85] Compiling Control.Lens.Indexed ( src/Control/Lens/Indexed.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Indexed.o )
+[33 of 85] Compiling Control.Lens.Level ( src/Control/Lens/Level.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Level.o )
+[34 of 85] Compiling Control.Lens.Reified ( src/Control/Lens/Reified.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Reified.o )
+[35 of 85] Compiling Data.Data.Lens   ( src/Data/Data/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Data/Lens.o )
+[36 of 85] Compiling Control.Lens.Plated ( src/Control/Lens/Plated.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Plated.o )
+[37 of 85] Compiling Control.Lens.Equality ( src/Control/Lens/Equality.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Equality.o )
+[38 of 85] Compiling Control.Lens.Iso ( src/Control/Lens/Iso.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Iso.o )
+[39 of 85] Compiling Control.Lens.Wrapped ( src/Control/Lens/Wrapped.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Wrapped.o )
+[40 of 85] Compiling Control.Lens.Empty ( src/Control/Lens/Empty.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Empty.o )
+[41 of 85] Compiling Control.Lens.Each ( src/Control/Lens/Each.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Each.o )
+[42 of 85] Compiling Control.Lens.Cons ( src/Control/Lens/Cons.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Cons.o )
+[43 of 85] Compiling Control.Lens.Internal.Deque ( src/Control/Lens/Internal/Deque.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Deque.o )
+[44 of 85] Compiling Control.Lens.At  ( src/Control/Lens/At.hs, dist/dist-sandbox-71d48313/build/Control/Lens/At.o )
+[45 of 85] Compiling Language.Haskell.TH.Lens ( src/Language/Haskell/TH/Lens.hs, dist/dist-sandbox-71d48313/build/Language/Haskell/TH/Lens.o )
+[46 of 85] Compiling Control.Lens.TH  ( src/Control/Lens/TH.hs, dist/dist-sandbox-71d48313/build/Control/Lens/TH.o )
+[47 of 85] Compiling Control.Lens.Action ( src/Control/Lens/Action.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Action.o )
+[48 of 85] Compiling Control.Lens.Internal.Exception ( src/Control/Lens/Internal/Exception.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/Exception.o )
+[49 of 85] Compiling Control.Lens.Internal ( src/Control/Lens/Internal.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal.o )
+[50 of 85] Compiling Control.Lens     ( src/Control/Lens.hs, dist/dist-sandbox-71d48313/build/Control/Lens.o )
+[51 of 85] Compiling Control.Exception.Lens ( src/Control/Exception/Lens.hs, dist/dist-sandbox-71d48313/build/Control/Exception/Lens.o )
+[52 of 85] Compiling Control.Lens.Combinators ( src/Control/Lens/Combinators.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Combinators.o )
+[53 of 85] Compiling Control.Lens.Extras ( src/Control/Lens/Extras.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Extras.o )
+[54 of 85] Compiling Control.Lens.Internal.ByteString ( src/Control/Lens/Internal/ByteString.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Internal/ByteString.o )
+[55 of 85] Compiling Control.Lens.Operators ( src/Control/Lens/Operators.hs, dist/dist-sandbox-71d48313/build/Control/Lens/Operators.o )
+[56 of 85] Compiling Control.Monad.Error.Lens ( src/Control/Monad/Error/Lens.hs, dist/dist-sandbox-71d48313/build/Control/Monad/Error/Lens.o )
+[57 of 85] Compiling Control.Monad.Primitive.Lens ( src/Control/Monad/Primitive/Lens.hs, dist/dist-sandbox-71d48313/build/Control/Monad/Primitive/Lens.o )
+[58 of 85] Compiling Control.Parallel.Strategies.Lens ( src/Control/Parallel/Strategies/Lens.hs, dist/dist-sandbox-71d48313/build/Control/Parallel/Strategies/Lens.o )
+[59 of 85] Compiling Control.Seq.Lens ( src/Control/Seq/Lens.hs, dist/dist-sandbox-71d48313/build/Control/Seq/Lens.o )
+[60 of 85] Compiling Data.Aeson.Lens  ( src/Data/Aeson/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Aeson/Lens.o )
+[61 of 85] Compiling Data.Array.Lens  ( src/Data/Array/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Array/Lens.o )
+[62 of 85] Compiling Data.Bits.Lens   ( src/Data/Bits/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Bits/Lens.o )
+[63 of 85] Compiling Data.ByteString.Strict.Lens ( src/Data/ByteString/Strict/Lens.hs, dist/dist-sandbox-71d48313/build/Data/ByteString/Strict/Lens.o )
+[64 of 85] Compiling Data.ByteString.Lazy.Lens ( src/Data/ByteString/Lazy/Lens.hs, dist/dist-sandbox-71d48313/build/Data/ByteString/Lazy/Lens.o )
+[65 of 85] Compiling Data.ByteString.Lens ( src/Data/ByteString/Lens.hs, dist/dist-sandbox-71d48313/build/Data/ByteString/Lens.o )
+[66 of 85] Compiling Data.Complex.Lens ( src/Data/Complex/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Complex/Lens.o )
+[67 of 85] Compiling Data.Dynamic.Lens ( src/Data/Dynamic/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Dynamic/Lens.o )
+[68 of 85] Compiling Data.IntSet.Lens ( src/Data/IntSet/Lens.hs, dist/dist-sandbox-71d48313/build/Data/IntSet/Lens.o )
+[69 of 85] Compiling Data.List.Lens   ( src/Data/List/Lens.hs, dist/dist-sandbox-71d48313/build/Data/List/Lens.o )
+[70 of 85] Compiling Data.List.Split.Lens ( src/Data/List/Split/Lens.hs, dist/dist-sandbox-71d48313/build/Data/List/Split/Lens.o )
+[71 of 85] Compiling Data.Sequence.Lens ( src/Data/Sequence/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Sequence/Lens.o )
+[72 of 85] Compiling Data.Text.Strict.Lens ( src/Data/Text/Strict/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Text/Strict/Lens.o )
+[73 of 85] Compiling Data.Text.Lazy.Lens ( src/Data/Text/Lazy/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Text/Lazy/Lens.o )
+[74 of 85] Compiling Data.Text.Lens   ( src/Data/Text/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Text/Lens.o )
+[75 of 85] Compiling Data.Tree.Lens   ( src/Data/Tree/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Tree/Lens.o )
+[76 of 85] Compiling Data.Typeable.Lens ( src/Data/Typeable/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Typeable/Lens.o )
+[77 of 85] Compiling Data.Vector.Lens ( src/Data/Vector/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Vector/Lens.o )
+[78 of 85] Compiling Data.Vector.Generic.Lens ( src/Data/Vector/Generic/Lens.hs, dist/dist-sandbox-71d48313/build/Data/Vector/Generic/Lens.o )
+[79 of 85] Compiling Generics.Deriving.Lens ( src/Generics/Deriving/Lens.hs, dist/dist-sandbox-71d48313/build/Generics/Deriving/Lens.o )
+[80 of 85] Compiling GHC.Generics.Lens ( src/GHC/Generics/Lens.hs, dist/dist-sandbox-71d48313/build/GHC/Generics/Lens.o )
+[81 of 85] Compiling System.Exit.Lens ( src/System/Exit/Lens.hs, dist/dist-sandbox-71d48313/build/System/Exit/Lens.o )
+[82 of 85] Compiling System.FilePath.Lens ( src/System/FilePath/Lens.hs, dist/dist-sandbox-71d48313/build/System/FilePath/Lens.o )
+[83 of 85] Compiling System.IO.Error.Lens ( src/System/IO/Error/Lens.hs, dist/dist-sandbox-71d48313/build/System/IO/Error/Lens.o )
+[84 of 85] Compiling Numeric.Lens     ( src/Numeric/Lens.hs, dist/dist-sandbox-71d48313/build/Numeric/Lens.o )
+[85 of 85] Compiling Codec.Compression.Zlib.Lens ( src/Codec/Compression/Zlib/Lens.hs, dist/dist-sandbox-71d48313/build/Codec/Compression/Zlib/Lens.o )
+In-place registering lens-4.1.2...
+Creating package registration file: /tmp/pkgConf-lens-4.125409.2
+Installing library in
+/home/greghale/Programming/haskell/haskell-tetrode-ephys/.cabal-sandbox/lib/x86_64-linux-ghc-7.6.3/lens-4.1.2
+Registering lens-4.1.2...

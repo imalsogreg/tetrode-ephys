@@ -5,6 +5,7 @@ module Data.Map.KDMap where
 
 import Control.Applicative
 import Data.Maybe (maybeToList)
+import Data.Monoid
 import qualified Data.List as L
 import Data.Ord (comparing)
 import qualified Data.Foldable as F
@@ -15,7 +16,7 @@ data KDMap k a = KDEmpty
                deriving (Eq, Show)
 
 newtype Weight = Weight {unWeight :: Double}
-                 deriving (Show, Eq, Num, Enum, Fractional)
+                 deriving (Show, Eq, Num, Enum, Fractional,Real,Ord)
 
 newtype Depth = Depth {unDepth :: Int}
               deriving (Eq,Show,Num,Enum,Integral,Real,Ord)
@@ -41,7 +42,8 @@ class KDKey k where
 instance F.Foldable (KDMap k) where
   foldr _ z KDEmpty = z
   foldr f z (KDLeaf _ a _) = f a z
-  foldr f z (KDBranch _ v _ kdLeft kdRight) = F.foldr f (f v (F.foldr f z kdLeft)) kdRight
+  foldr f z (KDBranch _ v _ kdLeft kdRight) =
+    F.foldr f (f v (F.foldr f z kdLeft)) kdRight
 
 data Point2 = Point2 {p2x :: Double
                      ,p2y :: Double
@@ -58,6 +60,15 @@ instance KDKey Point2 where
   dSucc p d = succ d `mod` fromIntegral (pointSize p)
   dPred p d = pred d `mod` fromIntegral (pointSize p)
 
+instance Monoid Point2 where
+  mempty        = Point2 0 0 0
+  a `mappend` b = Point2 x' y' w'
+    where w' = p2w a + p2w b
+          aFrac = realToFrac $ p2w a / w' :: Double
+          bFrac = realToFrac $ p2w b / w' :: Double
+          x' = p2x a * aFrac + p2x b * bFrac :: Double
+          y' = p2y a * aFrac + p2y b * bFrac :: Double
+
 toList :: KDMap k a -> [(k,a)]
 toList KDEmpty = []
 toList (KDLeaf k a _) = [(k,a)]
@@ -71,33 +82,24 @@ closer (Just optA@(kA,_)) (Just optB@(kB,_)) k
   | pointDistSq kA k < pointDistSq kB k = Just optA
   | otherwise                           = Just optB
 
-delete :: (Show k, Eq k, KDKey k) => k -> KDMap k a -> KDMap k a
+add :: (Eq k, Eq a, Monoid a, KDKey k, Monoid k) => KDMap k a -> Double -> k -> a -> KDMap k a
+add m thresh k a = case closest k m of
+  Nothing      -> insert 0 k a m
+  Just (k',a') -> if pointDistSq k k' <= thresh^(2::Int)
+                  then insert 0 (k <> k') (a <> a') . delete k' $ m
+                  else insert 0 k a m
+
+delete :: (Eq k, KDKey k) => k -> KDMap k a -> KDMap k a
 delete _ KDEmpty = KDEmpty
 delete k m@(KDLeaf k' _ _)
   | k == k'   = KDEmpty
---  | otherwise = KDEmpty -- TODO really?
-  | otherwise = trace ("Delete leaf. k:" ++ show k ++ " k':" ++ show k' ++ "\n") m
+  | otherwise = m
 delete k (KDBranch k' a' d kdLeft kdRight)
   | k == k' = fromListWithDepth d (toList kdLeft ++ toList kdRight)
-  | otherwise = trace ("delete Branch") $ case dimOrder k k' d of
+  | otherwise = case dimOrder k k' d of
     EQ -> KDBranch k' a' d (delete k kdLeft) (delete k kdRight)
     LT -> KDBranch k' a' d (delete k kdLeft)  kdRight
     GT -> KDBranch k' a' d  kdLeft           (delete k kdRight)
-
-
-delete' :: (Show k, Eq k, KDKey k, Eq a) => k -> KDMap k a -> KDMap k a
-delete' _ KDEmpty = KDEmpty
-delete' k l@(KDLeaf k' _ _)
-  | k == k' = KDEmpty
-  | otherwise = l
-delete' k (KDBranch k' a' d' kdLeft kdRight)
-  | k == k' = fromListWithDepth d' (toList kdLeft ++ toList kdRight)
-  | otherwise = KDBranch k' a' d' (subTree kdLeft) (subTree kdRight)
-  where
-    subTree t = if   (fst <$> closest k t) == Just k
-                then delete k t
-                else t
-                
 
 closest :: (Eq a, Eq k, KDKey k) => k -> KDMap k a -> Maybe (k,a)
 closest _ KDEmpty = Nothing
