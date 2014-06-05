@@ -36,6 +36,11 @@ data Position = Position { _posTime        :: !ExperimentTime
                          }
               deriving (Eq, Ord, Show, Generic)
 
+------------------------------------------------------------------------------
+nullPosition :: Position
+nullPosition = Position (-1e6) (Location 0 0 0) (Angle 0 0 0) 0 0
+               ConfNone [] [] (-1e6) (Location 0 0 0)
+
 instance Serialize Location
 instance Serialize Angle
 instance Serialize PosConf

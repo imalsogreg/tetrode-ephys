@@ -33,10 +33,22 @@ $(makeLenses ''MWLPos)
 produceMWLPos :: BSL.ByteString -> Producer MWLPos IO ()
 produceMWLPos f =
   let bytes = PBS.fromLazy . dropHeaderInFirstChunk $ f
---      myGet = return :: (Get a) => Get a
-  in
-   dropResult $ getMany Binary.get bytes
---  view $ PBinary.decoded parsePRecord (PBS.fromLazy . dropHeaderInFirstChunk $ f)
+  in dropResult $ getMany Binary.get bytes
+
+data PosMWLShim = PosMWLShim { 
+    shimOriginXPixel :: !Int
+  , shimOriginYPixel :: !Int
+  , shimPxPerMeter   :: !Double
+  , shimTrackHeight  :: !Double
+  }
+                  
+producePosition :: PosMWLShim -> FilePath -> Producer Position IO ()
+producePosition sh fp = produceMWLPosFromFile fp >->
+                        runningPosition (x0,y0) s h nullPosition
+  where (x0,y0) = (fromIntegral $ shimOriginXPixel sh,
+                   fromIntegral $ shimOriginYPixel sh)
+        s       = shimPxPerMeter  sh 
+        h       = shimTrackHeight sh
 
 produceMWLPosFromFile :: FilePath -> Producer MWLPos IO ()
 produceMWLPosFromFile fn = do
