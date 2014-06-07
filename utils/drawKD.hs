@@ -14,27 +14,29 @@ import Debug.Trace
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import Pipes
+import Pipes.RealTime
 import qualified Pipes.Prelude as PP
+import System.Environment
 
 import Data.Ephys.Spike
 import Data.Ephys.OldMWL.Parse
 
 drawPoint :: Point2 -> Picture
 drawPoint (Point2 x y w) =
-  translate (realToFrac x) (realToFrac y) $ circle (log (realToFrac w) / 10000000)
+  translate (realToFrac x) (realToFrac y) $ circle (log (realToFrac w) / 3000000)
 
 data World = World { mainMap   :: KDMap Point2 Int
                    , selection :: Maybe (Point2, Int)
                    , time      :: Double
-                   , spikeChan :: TChan TrodeSpikes
+                   , spikeChan :: TChan TrodeSpike
                    }
 
 instance Monoid Int where
   mempty = 0
   mappend = (+)
 
-world0 :: Producer TrodeSpike IO () -> World
-world0 p = World KDEmpty Nothing 4492 p
+world0 :: TChan TrodeSpike -> World
+world0 c = World KDEmpty Nothing 4492 c
 
 drawTree :: KDMap Point2 a -> Picture
 drawTree = Pictures . map (drawPoint) . keys
@@ -44,18 +46,28 @@ drawSelection Nothing = []
 drawSelection (Just ((Point2 x y w),i)) = [translate (realToFrac x) (realToFrac y) $ circleSolid (realToFrac w)]
 
 drawWorld :: World -> IO Picture
-drawWorld w = return $ scale 3000000 3000000 $
+drawWorld w = return $ translate (-200) (-200) $ scale 2000000 2000000 $
               Pictures (drawTree (mainMap w) : drawSelection (selection w))
+
+flushChan :: TChan a -> STM [a]
+flushChan c = go []
+  where go acc = do
+          emp <- isEmptyTChan c
+          if emp
+            then return $ reverse acc
+            else do
+                 e <- readTChan c
+                 go (e:acc)
 
 fTime :: Float -> World -> IO World
 fTime t w = do
   let tNext = time w + realToFrac t
-  spikes <- while (\s -> spikeTime s < tNow) 
+      c = spikeChan w
+  spikes <- atomically $ flushChan c
   let spikePoints s = (spikeAmplitudes s ! 0, spikeAmplitudes s ! 1)
       toPoint (x,y) = Point2 (realToFrac x) (realToFrac y) 1.0
       points = map (toPoint . spikePoints) spikes
-      newMap = foldl' (\m p -> add m 0.00001 p 10) (mainMap w) points
---  print $ points
+      newMap = foldl' (\m p -> add m 0.000007 p 10) (mainMap w) points
   return w { mainMap = newMap,
              time = tNext
            }
@@ -74,8 +86,12 @@ fInputs _ w = return w
 ------------------------------------------------------------------------------
 main :: IO ()
 main = do
-  let fn = "/home/greghale/Data/caillou/112812clip2/1628/1628.tt"
-  let p = produceTrodeSpikesFromFile fn 16
-  _ <- async $ prod
+  (f:_) <- getArgs
+  let fn = "/home/greghale/Data/caillou/112812clip2/" ++
+           f ++ "/" ++ f ++ ".tt"
+  c <- newTChanIO
+  _ <- async . runEffect $ produceTrodeSpikesFromFile fn 16
+       >-> relativeTimeCat (\s -> spikeTime s - 4492)
+       >-> (forever $ await >>= lift . atomically . writeTChan c)
   playIO (InWindow "KDMap" (500,500) (100,100))
-    white 30 (world0 fi bytes) drawWorld fInputs fTime
+    white 30 (world0 c) drawWorld fInputs fTime

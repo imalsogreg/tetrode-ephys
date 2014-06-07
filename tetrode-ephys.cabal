@@ -137,8 +137,10 @@ Executable posCutHead
 Executable drawKD
   HS-Source-Dirs: utils
   Main-Is:        drawKD.hs
+  Ghc-Options:    -threaded
   Build-Depends:  async,
                   base,
+                  bytestring,
                   gloss,
                   pipes,
                   pipes-rt,
