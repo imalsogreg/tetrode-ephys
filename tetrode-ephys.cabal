@@ -137,6 +137,11 @@ Executable posCutHead
 Executable drawKD
   HS-Source-Dirs: utils
   Main-Is:        drawKD.hs
-  Build-Depends:  base,
+  Build-Depends:  async,
+                  base,
                   gloss,
-                  tetrode-ephys
+                  pipes,
+                  pipes-rt,
+                  stm,
+                  tetrode-ephys,
+                  vector
