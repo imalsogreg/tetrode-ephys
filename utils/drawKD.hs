@@ -24,11 +24,12 @@ import System.Environment
 import Data.Ephys.Spike
 import Data.Ephys.OldMWL.Parse
 
-drawPoint :: Double -> (Point2, SpikeTime) -> Picture
-drawPoint tNow (Point2 x y w, tSpike) =
-  translate (realToFrac x) (realToFrac y) $
-  Pictures [ color (pointColor tNow tSpike) $ circleSolid (1e-6 + log (realToFrac w) / 3000000)
-           , circle (1e-6 + log (realToFrac w) / 3000000)
+drawPoint :: Int -> Int -> Double -> (Point4, SpikeTime) -> Picture
+drawPoint xInd yInd tNow (p, tSpike) =
+  translate (realToFrac $ pointD p (Depth xInd)) (realToFrac $ pointD p (Depth yInd)) $
+  Pictures [ color (pointColor tNow tSpike) $
+             circleSolid (1e-6 + log (realToFrac $ pointW p) / 3000000)
+           , circle (1e-6 + log (realToFrac $ pointW p) / 3000000)
            ]
 
 pointColor :: Double -> SpikeTime -> Color.Color
@@ -47,27 +48,33 @@ instance Monoid SpikeTime where
   mappend a b = SpikeTime $ (max `on` unSpikeTime) a b
 
 
-
-data World = World { mainMap   :: KDMap Point2 SpikeTime
-                   , selection :: Maybe (Point2, SpikeTime)
+data World = World { mainMap   :: KDMap Point4 SpikeTime
+                   , selection :: Maybe (Point4, SpikeTime)
                    , time      :: Double
                    , spikeChan :: TChan TrodeSpike
+                   , chanX     :: Int
+                   , chanY     :: Int    
                    }
 
 world0 :: TChan TrodeSpike -> World
-world0 c = World KDEmpty Nothing 4492 c
+world0 c = World KDEmpty Nothing 4492 c 0 1
 
-drawTree :: Double -> KDMap Point2 SpikeTime -> Picture
-drawTree tNow = Pictures . map (drawPoint tNow) . toList
+drawTree :: Int -> Int -> Double -> KDMap Point4 SpikeTime -> Picture
+drawTree xInd yInd tNow = Pictures . map (drawPoint xInd yInd tNow) . toList
 
-drawSelection :: Maybe (Point2,SpikeTime) -> [Picture]
-drawSelection Nothing = []
-drawSelection (Just ((Point2 x y w),i)) = [translate (realToFrac x) (realToFrac y) $
-                                           circleSolid (realToFrac w)]
+drawSelection :: Int -> Int -> Double -> Maybe (Point4,SpikeTime) -> [Picture]
+drawSelection _ _ _ Nothing = []
+drawSelection xInd yInd tNow (Just (p,i)) = [drawPoint xInd yInd tNow (p,i)]
 
 drawWorld :: World -> IO Picture
-drawWorld w = return $ translate (-200) (-200) $ scale 2000000 2000000 $
-              Pictures (drawTree (time w) (mainMap w) : drawSelection (selection w))
+drawWorld w = do
+  print x
+  print y
+  return $ translate (-200) (-200) $ scale 2000000 2000000 $
+    Pictures (drawTree x y t (mainMap w) : drawSelection x y t (selection w))
+  where t = time w
+        x = chanX w
+        y = chanY w
 
 flushChan :: TChan a -> STM [a]
 flushChan c = go []
@@ -84,9 +91,14 @@ fTime t0 _ w = do
   tNext <- getExperimentTime t0 4492  -- (old way) time w + realToFrac t
   let c = spikeChan w
   spikes <- atomically $ flushChan c
-  let spikePoints s = (spikeAmplitudes s ! 1, spikeAmplitudes s ! 2)
-      toPoint (x,y) = Point2 (realToFrac x) (realToFrac y) 1.0
-      points = map (toPoint . spikePoints) spikes
+  let spikeCoords s = (spikeAmplitudes s ! 1, spikeAmplitudes s ! 2)
+      toPoint s = Point4
+                  (realToFrac $ spikeAmplitudes s ! 0)
+                  (realToFrac $ spikeAmplitudes s ! 1)
+                  (realToFrac $ spikeAmplitudes s ! 2)
+                  (realToFrac $ spikeAmplitudes s ! 3)
+                  1.0
+      points = map toPoint spikes
       times  = map (SpikeTime . spikeTime) spikes
       newMap = foldl' (\m (p,t) -> add m 0.000007 p t) (mainMap w) (zip points times)
   return w { mainMap = newMap,
@@ -97,10 +109,15 @@ fTime t0 _ w = do
 ------------------------------------------------------------------------------
 fInputs :: Event -> World -> IO World
 fInputs (EventKey (MouseButton b) Up _ (x,y)) w
+--  | b == LeftButton =
+--    let newMap = add (mainMap w) 20.0 (Point4 (realToFrac x) (realToFrac y) 3.0) (SpikeTime 0)
+--    in  return w { mainMap = newMap }
   | b == LeftButton =
-    let newMap = add (mainMap w) 20.0 (Point2 (realToFrac x) (realToFrac y) 3.0) (SpikeTime 0)
-    in  return w { mainMap = newMap }
+    return $ w { chanX = (chanX w + 1) `mod` 4}
+  | b == RightButton =
+      return $ w { chanY = (chanY w + 1) `mod` 4}
   | otherwise = return w
+
 fInputs _ w = return w
 
 

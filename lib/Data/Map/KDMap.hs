@@ -49,14 +49,33 @@ data Point2 = Point2 {p2x :: Double
                      ,p2y :: Double
                      ,p2w :: Weight
                      }
-                 deriving (Show,Eq)
+            deriving (Show, Eq)
+
+data Point4 = Point4 {p4a :: Double
+                     ,p4b :: Double
+                     ,p4c :: Double
+                     ,p4d :: Double
+                     ,p4w :: Weight
+                     }
+            deriving (Show, Eq)
 
 instance KDKey Point2 where
   pointD p 0 = p2x p
   pointD p 1 = p2y p
-  pointD _              n = error $ "Point2 out of bounds index: " ++ show n
+  pointD _ n = error $ "Point2 out of bounds index: " ++ show n
   pointSize _    = 2
   pointW p   = p2w p
+  dSucc p d = succ d `mod` fromIntegral (pointSize p)
+  dPred p d = pred d `mod` fromIntegral (pointSize p)
+
+instance KDKey Point4 where
+  pointD p 0 = p4a p
+  pointD p 1 = p4b p
+  pointD p 2 = p4c p
+  pointD p 3 = p4d p
+  pointD _ n = error $ "Point4 out of bounds index: " ++ show n
+  pointSize p = 4
+  pointW p = p4w p
   dSucc p d = succ d `mod` fromIntegral (pointSize p)
   dPred p d = pred d `mod` fromIntegral (pointSize p)
 
@@ -68,6 +87,15 @@ instance Monoid Point2 where
           bFrac = realToFrac $ p2w b / w' :: Double
           x' = p2x a * aFrac + p2x b * bFrac :: Double
           y' = p2y a * aFrac + p2y b * bFrac :: Double
+
+instance Monoid Point4 where
+  mempty        = Point4 0 0 0 0 0
+  a `mappend` b = Point4 a' b' c' d' w'
+    where w' = p4w a + p4w b
+          aFrac = realToFrac $ p4w a / w' :: Double
+          bFrac = realToFrac $ p4w b / w'
+          x' n = pointD a n * aFrac + pointD b n * bFrac
+          (a', b', c', d') = (x' 0, x' 1, x' 2, x' 3)
 
 toList :: KDMap k a -> [(k,a)]
 toList KDEmpty = []
