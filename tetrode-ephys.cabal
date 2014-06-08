@@ -146,4 +146,5 @@ Executable drawKD
                   pipes-rt,
                   stm,
                   tetrode-ephys,
+                  time,
                   vector

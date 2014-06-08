@@ -10,6 +10,7 @@ import Data.Function (on)
 import Data.List (foldl')
 import Data.Map.KDMap
 import Data.Monoid
+import Data.Time (UTCTime, getCurrentTime, diffUTCTime)
 import Data.Vector ((!))
 import Debug.Trace
 import Graphics.Gloss
@@ -34,8 +35,8 @@ pointColor :: Double -> SpikeTime -> Color.Color
 pointColor tNow (SpikeTime tSpike) = Color.makeColor r g b 1
   where e tau = exp (-1 * (max dt 0) / tau)
         dt = (realToFrac tNow) - (realToFrac tSpike)
-        r = e 1
-        g = e 0.5
+        r = e 0.2
+        g = e 1
         b = e 20
 
 newtype SpikeTime = SpikeTime { unSpikeTime :: Double }
@@ -78,12 +79,12 @@ flushChan c = go []
                  e <- readTChan c
                  go (e:acc)
 
-fTime :: Float -> World -> IO World
-fTime t w = do
-  let tNext = time w + realToFrac t
-      c = spikeChan w
+fTime :: UTCTime -> Float -> World -> IO World
+fTime t0 _ w = do
+  tNext <- getExperimentTime t0 4492  -- (old way) time w + realToFrac t
+  let c = spikeChan w
   spikes <- atomically $ flushChan c
-  let spikePoints s = (spikeAmplitudes s ! 0, spikeAmplitudes s ! 1)
+  let spikePoints s = (spikeAmplitudes s ! 1, spikeAmplitudes s ! 2)
       toPoint (x,y) = Point2 (realToFrac x) (realToFrac y) 1.0
       points = map (toPoint . spikePoints) spikes
       times  = map (SpikeTime . spikeTime) spikes
@@ -110,8 +111,13 @@ main = do
   let fn = "/home/greghale/Data/caillou/112812clip2/" ++
            f ++ "/" ++ f ++ ".tt"
   c <- newTChanIO
+  t0 <- getCurrentTime
   _ <- async . runEffect $ produceTrodeSpikesFromFile fn 16
        >-> relativeTimeCat (\s -> spikeTime s - 4492)
        >-> (forever $ await >>= lift . atomically . writeTChan c)
   playIO (InWindow "KDMap" (500,500) (100,100))
-    white 30 (world0 c) drawWorld fInputs fTime
+    white 30 (world0 c) drawWorld fInputs (fTime t0)
+
+getExperimentTime :: UTCTime -> Double -> IO Double
+getExperimentTime t0 et0 =
+  (et0 +) . realToFrac . flip diffUTCTime t0 <$> getCurrentTime
