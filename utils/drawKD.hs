@@ -68,8 +68,6 @@ drawSelection xInd yInd tNow (Just (p,i)) = [drawPoint xInd yInd tNow (p,i)]
 
 drawWorld :: World -> IO Picture
 drawWorld w = do
-  print x
-  print y
   return $ translate (-200) (-200) $ scale 2000000 2000000 $
     Pictures (drawTree x y t (mainMap w) : drawSelection x y t (selection w))
   where t = time w
@@ -100,7 +98,7 @@ fTime t0 _ w = do
                   1.0
       points = map toPoint spikes
       times  = map (SpikeTime . spikeTime) spikes
-      newMap = foldl' (\m (p,t) -> add m 0.000007 p t) (mainMap w) (zip points times)
+      newMap = foldl' (\m (p,t) -> add m 0.00002 p t) (mainMap w) (zip points times)
   return w { mainMap = newMap,
              time = tNext
            }
