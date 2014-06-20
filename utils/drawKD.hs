@@ -20,7 +20,7 @@ import Pipes
 import Pipes.RealTime
 import qualified Pipes.Prelude as PP
 import System.Environment
-
+import System.Directory
 import Data.Ephys.Spike
 import Data.Ephys.OldMWL.Parse
 
@@ -123,8 +123,11 @@ fInputs _ w = return w
 main :: IO ()
 main = do
   (f:_) <- getArgs
-  let fn = "/home/greghale/Data/caillou/112812clip2/" ++
-           f ++ "/" ++ f ++ ".tt"
+  --let fn = "/home/greghale/Data/caillou/112812clip2/" ++
+    --       f ++ "/" ++ f ++ ".tt"
+  let fn = f
+  fileExist <-doesFileExist fn
+  when (not fileExist) $ error "File does not exist"
   c <- newTChanIO
   t0 <- getCurrentTime
   _ <- async . runEffect $ produceTrodeSpikesFromFile fn 16
