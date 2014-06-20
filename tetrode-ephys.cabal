@@ -141,6 +141,7 @@ Executable drawKD
   Build-Depends:  async,
                   base,
                   bytestring,
+                  directory,
                   gloss,
                   pipes,
                   pipes-rt,
