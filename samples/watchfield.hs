@@ -10,6 +10,7 @@ import Data.Ephys.Position
 import Data.Ephys.TrackPosition
 import Data.Ephys.Cluster
 import Data.Ephys.OldMWL.Parse
+import Data.Ephys.OldMWL.ParseSpike
 import Data.Ephys.OldMWL.FileInfo
 import Data.Ephys.OldMWL.ParsePFile
 import Data.Ephys.OldMWL.ParseClusterFile

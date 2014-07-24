@@ -147,10 +147,33 @@ closest k (KDBranch k' a' d' kdLeft kdRight) = case dimOrder k k' d' of
       in Just $ L.minimumBy (comparing (pointDistSq k . fst))
          (mainCandidates ++ otherCandidates)
 
+
+------------------------------------------------------------------------------
+allInRange :: (Eq a, Eq k, KDKey k) => Double -> k -> KDMap k a -> [(k,a)]
+allInRange distThreshold k =
+  filter (\p -> pointDistSq k (fst p) < distThreshold^(2::Int)) .
+  allInRangeAux distThreshold k
+
+
+allInRangeAux :: (Eq a, Eq k, KDKey k) => Double -> k
+              -> KDMap k a -> [(k,a)]
+allInRangeAux _ _ KDEmpty = []
+allInRangeAux distThreshold k' (KDLeaf k a d)
+  | pointDDistSq k' k d <= distThreshold^(2::Int) = [(k,a)]
+  | otherwise                                     = []
+allInRangeAux distThreshold k' (KDBranch k a d treeL treeR)
+  | pointDDistSq k' k d <= distThreshold^(2::Int) =
+    [(k,a)]
+    ++ allInRangeAux distThreshold k' treeL
+    ++ allInRangeAux distThreshold k' treeR
+  | otherwise = []
+
+------------------------------------------------------------------------------
 isValid :: (Eq k, KDKey k,Show a,Show k) => KDMap k a -> Bool
 isValid KDEmpty = True
 isValid (KDLeaf _ _ _) = True
-isValid (KDBranch k _ d kdLeft kdRight) = thisValid && isValid kdLeft && isValid kdRight
+isValid (KDBranch k _ d kdLeft kdRight) =
+  thisValid && isValid kdLeft && isValid kdRight
   where thisValid = all (\(k',_) -> dimOrder k' k d == LT) (toList kdLeft)
                     &&
                     all (\(k',_) -> dimOrder k' k d /= LT) (toList kdRight)

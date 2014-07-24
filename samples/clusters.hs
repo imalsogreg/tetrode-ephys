@@ -5,6 +5,7 @@ module Main where
 import Data.Ephys.Spike
 import Data.Ephys.Cluster
 import Data.Ephys.OldMWL.Parse
+import Data.Ephys.OldMWL.ParseSpike
 import Data.Ephys.OldMWL.FileInfo
 import Data.Ephys.OldMWL.ParseClusterFile
 

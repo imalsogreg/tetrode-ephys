@@ -11,7 +11,7 @@ Bug-Reports:     http://github.com/ImAlsoGreg/haskell-tetrode-ephys/issues
 Category:        Science
 Build-Type:      Simple
 Synopsis:        Haskell stuff for tetrodes, clusters, and stimuli
-Cabal-Version:   >=1.8
+Cabal-Version:   >=1.10
 Extra-Source-Files: README.md
 Description:
   Data types for tetrodes, spike clusters, spike wave forms, spike parameters, subejct location information.
@@ -21,8 +21,9 @@ Source-Repository head
   Location: git://github.com/ImAlsoGreg/haskell-tetrode-ephys.git
 
 Library
+  Default-Language: Haskell2010
   Hs-Source-Dirs: lib
-  Ghc-Options:     -O2 -threaded -fprof-auto -funbox-strict-fields -rtsopts -with-rtsopts=-N4
+  Ghc-Options:     -O2 -threaded -fprof-auto -funbox-strict-fields -rtsopts "-with-rtsopts=-N4"
   Build-Depends:
     base   (>= 4 && <= 5)
     , containers
@@ -67,11 +68,13 @@ Library
     Data.Ephys.OldMWL.FileInfo
     Data.Ephys.OldMWL.Parse
     Data.Ephys.OldMWL.ParseClusterFile
+    Data.Ephys.OldMWL.ParseSpike
     Data.Ephys.OldMWL.ParsePxyabw
     Data.Ephys.OldMWL.ParsePFile
     Data.Map.KDMap
 
 Executable clusters
+  Default-Language: Haskell2010
   Hs-Source-Dirs: samples
   Main-Is:        clusters.hs
   Build-Depends:  base,
@@ -83,6 +86,7 @@ Executable clusters
                   pipes-rt
 
 Executable watchpos
+  Default-Language: Haskell2010
   Hs-Source-Dirs: samples
   Main-Is:        watchpos.hs
   Build-Depends:  base,
@@ -93,6 +97,7 @@ Executable watchpos
                   tetrode-ephys 
 
 Executable watchfield
+  Default-Language: Haskell2010
   Hs-Source-Dirs: samples
   Main-Is:        watchfield.hs
   Ghc-Options:    -threaded -fprof-auto -rtsopts
@@ -109,6 +114,7 @@ Executable watchfield
                   pipes-rt
 
 Executable mwlfileutil
+  Default-Language: Haskell2010
   Hs-Source-Dirs: utils
   Main-Is:        mwlfileutils.hs
   Ghc-Options:    -threaded
@@ -119,6 +125,7 @@ Executable mwlfileutil
                   tetrode-ephys
 
 Executable posCutHead
+  Default-Language: Haskell2010
   Hs-Source-Dirs: utils
   Main-Is:        posCutHead.hs
   Build-Depends:  base,
@@ -135,16 +142,59 @@ Executable posCutHead
                   tetrode-ephys
 
 Executable drawKD
-  HS-Source-Dirs: utils
+  Default-Language: Haskell2010
+  HS-Source-Dirs: lib utils
   Main-Is:        drawKD.hs
   Ghc-Options:    -threaded
-  Build-Depends:  async,
-                  base,
-                  bytestring,
-                  gloss,
-                  pipes,
-                  pipes-rt,
-                  stm,
-                  tetrode-ephys,
-                  time,
-                  vector
+  Other-Modules:  
+    Data.Ephys
+    Data.Ephys.EphysDefs
+    Data.Ephys.Spike
+    Data.Ephys.Cluster
+    Data.Ephys.Position
+    Data.Ephys.TrackPosition
+    Data.Ephys.PlaceCell
+    Data.Ephys.PositionDecoding
+    Data.Ephys.Timeseries
+    Data.Ephys.Timeseries.Filter
+    Data.Ephys.GlossPictures
+    Data.Ephys.OldMWL.Header
+    Data.Ephys.OldMWL.FileInfo
+    Data.Ephys.OldMWL.Parse
+    Data.Ephys.OldMWL.ParseSpike
+    Data.Ephys.OldMWL.ParseClusterFile
+    Data.Ephys.OldMWL.ParsePxyabw
+    Data.Ephys.OldMWL.ParsePFile
+    Data.Map.KDMap
+  Build-Depends:  
+    async
+    , gloss
+    , stm
+    , tetrode-ephys
+    , base   (>= 4 && <= 5)
+    , containers
+    , directory
+    , cereal
+    , vector
+    , vector-binary-instances
+    , text
+    , time
+    , bytestring
+    , parsec
+    , hashable
+    , pipes == 4.1.1
+    , binary
+    , pipes-parse >= 3.0.1
+    , pipes-binary >= 0.4
+    , pipes-bytestring
+    , transformers == 0.3.0.0
+    , unordered-containers
+    , cpu
+    , hmatrix
+    , lens
+    , pipes-rt
+    , KdTree
+    , gloss
+    , safe
+    , data-binary-ieee754
+    , cmdargs

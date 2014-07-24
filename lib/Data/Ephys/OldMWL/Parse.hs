@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-} 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Data.Ephys.OldMWL.Parse where
 
@@ -32,19 +33,14 @@ import Pipes.Parse
 import qualified Data.Ephys.Spike as Arte
 import Data.Ephys.OldMWL.FileInfo
 
+{-
+-- TODO: This definition is moving over to Data.Ephys.OldMWL.ParseSpike
 data MWLSpike = MWLSpike { mwlSpikeTime      :: Double
                          , mwlSpikeWaveforms :: [U.Vector Double] -- Double is
                                                                   -- MWL units
                                                                   -- though
                          } deriving (Eq, Show)
-
-
-writeSpike :: FileInfo -> MWLSpike -> Put
-writeSpike fi (MWLSpike tSpike waveforms) = do
-  putWord32le $ encodeTime tSpike
-  let vs = List.concat . List.transpose . map U.toList $ waveforms
-  forM_ vs $ 
-    putWord16le . int16toWord16 . floor 
+-}
 
 decodeTime :: Word32 -> Double
 decodeTime = (/ 10000) . fromIntegral
@@ -76,37 +72,10 @@ int16toWord16 = fromIntegral
 int32toWord32 = fromIntegral
 -}
 
--- MWL units go as -2^13 -> (2^13-1)  => -10V -> 10V
-mwlUnitsToVoltage :: Double -> Double -> Double
-mwlUnitsToVoltage gain inV = inV * cVG/bMWL + (zMWL / bMWL)
-  where bMWL= 2^(13::Int) - 1
-        zMWL = -1/2^(15::Int)
-        cVG  = 10 / gain
-
-voltageToMwlUnits :: Double -> Double -> Double
-voltageToMwlUnits gain inV = inV / (mwlUnitsToVoltage gain 1.0)
-    
-
-chunkToLength :: [a] -> Int -> [[a]]
-chunkToLength xs n = aux [] xs
-  where aux acc []  = Prelude.reverse acc
-        aux acc xs' = aux (Prelude.take n xs' : acc) (Prelude.drop n xs')
-
-hMatrixVecToUnboxedVec :: Data.Packed.Vector.Vector Double -> U.Vector Double
-hMatrixVecToUnboxedVec = U.fromList . Data.Packed.Vector.toList
-
-fileGains :: FileInfo -> [Double]
-fileGains FileInfo{..} =
-  let gains' =
-        map (\(ChanDescr ampGain _ _ _ _) -> ampGain) hChanDescrs in
-  case hProbe of
-    0 -> take 4 gains'
-    1 -> take 4 . drop 4 $ gains'
-    n -> error $ "Can't have probe " ++ show n
-
+{-
 parseSpike :: FileInfo -> Get MWLSpike
 parseSpike fi@FileInfo{..}
-  | okSpikeFile fi = --FIXME
+  | True = -- okSpikeFile fi = --FIXME
     -- tsType unused because we're assuming tsType -> double.  Fix this by figuring out the
     -- MWL int to type code
     --let gains = fileGains fi
@@ -126,81 +95,20 @@ parseSpike fi@FileInfo{..}
           vsUVecs = map hMatrixVecToUnboxedVec vsVecs
       return $ MWLSpike (decodeTime ts) vsUVecs
   | otherwise    = error "Failed okFileInfo test"
-
-
-------------------------------------------------------------------------------
-produceMWLSpikes :: FileInfo -> BSL.ByteString -> Producer MWLSpike IO ()
-produceMWLSpikes fi b =
-  let myGet = parseSpike fi :: Get MWLSpike
-      bytes = PBS.fromLazy . dropHeaderInFirstChunk $ b
-  in dropResult (getMany myGet bytes)
+-}
 
 getMany :: Monad m => Get a -> Producer PBS.ByteString m r -> Producer a m PBinary.DecodingError
 getMany getA = go
   where go p = do
-          (x, p') <- lift $ runStateT (decodeGet getA) p
+          (!x, !p') <- lift $ runStateT (decodeGet getA) p
           case x of
             Left err -> return err
-            Right a -> do
+            Right !a -> do
               yield a
               go p'
 
-produceMWLSpikesFromFile :: FilePath -> Producer MWLSpike IO ()
-produceMWLSpikesFromFile fn = do
-  fi' <- liftIO $ getFileInfo fn
-  r   <- liftIO $ loadRawMWL fn
-  case (r,fi') of
---    Left e -> do
---      liftIO $ putStrLn $ "Couldn't open filename" ++ fn
-    (Right (_,dataBits), Right fi) ->
-      dropResult $ produceMWLSpikes fi dataBits
-
---produceTrodeSpikes :: Int -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO (Either (PBinary.DecodingError, Producer BS.ByteString IO ()) ())
-produceTrodeSpikes :: Int -> FileInfo -> BSL.ByteString -> Producer Arte.TrodeSpike IO ()
-produceTrodeSpikes tName fi b = produceMWLSpikes fi b >-> PP.map (mwlToArteSpike fi tName)
-
--- TODO Int to TrodeName
-produceTrodeSpikesFromFile :: FilePath -> Int -> Producer Arte.TrodeSpike IO ()
-produceTrodeSpikesFromFile fn trodeName = do
-  fi' <- liftIO . getFileInfo $ fn
-  r'  <- liftIO . loadRawMWL  $ fn
-  case (fi',r') of
-    (Right fi, Right (_,dataBytes)) ->
-     dropResult $ produceTrodeSpikes trodeName fi dataBytes
-    (Left e1, Left e2) ->
-      error $ fn ++ ": Bad fileinfo and file: " ++ e1 ++ " " ++ e2
-    (Left e1,_) -> error $ fn ++ ": Bad fileinfo: " ++ e1
-    (_,Left e2) -> error $ fn ++ ": Bad file: " ++ e2   
 
 -- TODO: This is misplaced.  Need something like "general utils."
 dropResult :: (Monad m) => Proxy a' a b' b m r -> Proxy a' a b' b m ()
 dropResult p = p >>= \_ -> return ()
-
-catSpike :: (Monad m) => Pipe Arte.TrodeSpike Arte.TrodeSpike m r
-catSpike = forever $ do
-  s <- await
-  yield s
-
-catSpike' :: Pipe MWLSpike MWLSpike IO r
-catSpike' = forever $ do
-  s <- await
-  lift $ putStrLn "catSpike'"
-  yield s
-
-mwlToArteSpike :: FileInfo -> Int -> MWLSpike -> Arte.TrodeSpike
-mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
-  where tTime      = mwlSpikeTime s
-        gains      = V.fromList $ fileGains fi
-        tWaveforms = V.zipWith
-                     (\g -> U.map (mwlUnitsToVoltage g))
-                     gains
-                     (V.fromList $ mwlSpikeWaveforms s)
-        tOpts = 1001 -- TODO: Get trodeopts
-
--- "path/to/0224.tt" -> "24"
--- TODO : Fix.  Only drop 5 when extention has 2 letters.
-mwlTrodeNameFromPath :: String -> T.Text
-mwlTrodeNameFromPath = T.pack . reverse . take 2 . drop 5 . reverse  
-
-
 

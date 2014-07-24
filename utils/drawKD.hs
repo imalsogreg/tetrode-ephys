@@ -23,6 +23,7 @@ import System.Environment
 
 import Data.Ephys.Spike
 import Data.Ephys.OldMWL.Parse
+import Data.Ephys.OldMWL.ParseSpike
 
 drawPoint :: Int -> Int -> Double -> (Point4, SpikeTime) -> Picture
 drawPoint xInd yInd tNow (p, tSpike) =

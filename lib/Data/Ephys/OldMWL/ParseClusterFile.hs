@@ -2,6 +2,7 @@ module Data.Ephys.OldMWL.ParseClusterFile where
 
 import Data.Ephys.Cluster
 import Data.Ephys.OldMWL.Parse
+import Data.Ephys.OldMWL.ParseSpike
 import Data.Ephys.OldMWL.FileInfo
 
 import Data.Map

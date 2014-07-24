@@ -5,7 +5,8 @@
 module Main where
 
 import Data.Ephys.OldMWL.ParsePFile
-import Data.Ephys.OldMWL.Parse -- meaning: ParseSpike...
+import Data.Ephys.OldMWL.Parse
+import Data.Ephys.OldMWL.ParseSpike
 import Data.Ephys.OldMWL.Header
 import Data.Ephys.OldMWL.FileInfo
 import Data.Ephys.OldMWL.ParsePxyabw
@@ -82,10 +83,14 @@ main = do
                           source = do
 --                            _ <- P.decodeGetMany (parseSpike fi) (P.fromLazy remaining) >->
 --                                 P.map snd >->
-                            _ <- getMany (parseSpike fi) (P.fromLazy remaining) >->
+                            _ <- case fileInfoToSpikeInfo fi of
+                              Right si -> 
+                                getMany (parseSpike si) (P.fromLazy remaining) >->
                                  P.filter (\spike -> mwlSpikeTime spike >= tStart) >->
                                  encodeSpike >->
                                  P.map BSL.fromStrict
+                              Left e ->
+                                error $ "Couldn't get spike info: " ++ e
                             return ()
                           encodeSpike :: P.MonadIO m => P.Pipe MWLSpike BS.ByteString m r
                           encodeSpike = P.for P.cat (\s -> P.encodePut (writeSpike fi s))
