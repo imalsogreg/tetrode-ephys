@@ -71,7 +71,7 @@ parseSpike info@SpikeFileInfo{..} = do
   let voltageArray = toChans info $
                      U.map (fI . word16ToInt16) vs :: [U.Vector Voltage]
   return $ MWLSpike tsDouble voltageArray
-
+{-# INLINE parseSpike #-}
 
 
 ------------------------------------------------------------------------------
@@ -80,6 +80,7 @@ produceMWLSpikes si b =
   let myGet = parseSpike si :: Get MWLSpike
       bytes = PBS.fromLazy . dropHeaderInFirstChunk $ b
   in dropResult (getMany myGet bytes)
+{-# INLINE produceMWLSpikes #-}
 
 
 ------------------------------------------------------------------------------
@@ -92,6 +93,8 @@ fileInfoToSpikeInfo fi@FileInfo{..} =
                                      (fromIntegral spikeNSamps `div` 4)
                                      (V.fromList $ fileGains fi)
 
+
+------------------------------------------------------------------------------
 produceMWLSpikesFromFile :: FilePath -> Producer MWLSpike IO ()
 produceMWLSpikesFromFile fn = do
   fi'     <- liftIO $ getFileInfo fn
@@ -132,6 +135,7 @@ mwlToArteSpike fi tName s = Arte.TrodeSpike tName tOpts tTime tWaveforms
                      gains
                      (V.fromList $ mwlSpikeWaveforms s)
         tOpts = 1001 -- TODO: Get trodeopts
+{-# INLINE mwlToArteSpike #-}
 
 -- "path/to/0224.tt" -> "24"
 -- TODO : Fix.  Only drop 5 when extention has 2 letters.
@@ -168,9 +172,8 @@ chunkToLength xs n = aux [] xs
   where aux acc []  = Prelude.reverse acc
         aux acc xs' = aux (Prelude.take n xs' : acc) (Prelude.drop n xs')
 
---hMatrixVecToUnboxedVec :: Data.Packed.Vector.Vector Double -> U.Vector Double
---hMatrixVecToUnboxedVec = U.fromList . Data.Packed.Vector.toList
 
+------------------------------------------------------------------------------
 fileGains :: FileInfo -> [Double]
 fileGains FileInfo{..} =
   let gains' =
@@ -179,12 +182,13 @@ fileGains FileInfo{..} =
     0 -> take 4 gains'
     1 -> take 4 . drop 4 $ gains'
     n -> error $ "Can't have probe " ++ show n
+{-# INLINE fileGains #-}
 
-
-
+------------------------------------------------------------------------------
 writeSpike :: FileInfo -> MWLSpike -> Put
 writeSpike fi (MWLSpike tSpike waveforms) = do
   putWord32le $ encodeTime tSpike
   let vs = List.concat . List.transpose . map U.toList $ waveforms
   forM_ vs $ 
     putWord16le . int16toWord16 . floor 
+{-# INLINE writeSpike #-}

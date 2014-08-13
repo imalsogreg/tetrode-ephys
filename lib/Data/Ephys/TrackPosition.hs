@@ -21,13 +21,6 @@ data TrackBin = TrackBin { _binName :: !String
 
 $(makeLenses ''TrackBin)
 
-{- Don't store track points in a KdTree anymore.
-instance KD.Point TrackBin where
-  dimension b = KD.dimension $ _binLoc b
-  coord n   b = KD.coord n (_binLoc b)
-  dist2 b1 b2 = KD.dist2 (b1 ^. binLoc) (b2 ^. binLoc)
--}
-
 data TrackSpec = TrackSpec { _keyPoints :: !Graph }  -- node :: (x,y), key :: String
 
 data Track = Track { _trackBins  :: [TrackBin]
@@ -140,6 +133,8 @@ circularTrack (cX,cY) r h w tau =
                      (theta + pi/2)
                      (-1 * tau / 2) (tau / 2)
                      w
-  
+
+------------------------------------------------------------------------------
 updateField :: (a -> a -> a) -> Field a -> Field a -> Field a
-updateField = Map.unionWith
+updateField f a b = let r = Map.unionWith f a b in r `seq` r
+{-# INLINE updateField #-}
