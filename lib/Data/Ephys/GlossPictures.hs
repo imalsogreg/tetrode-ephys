@@ -2,16 +2,20 @@
 
 module Data.Ephys.GlossPictures where
 
-import Data.Ephys.Position
-import Data.Ephys.TrackPosition
-import Data.Ephys.Spike
+------------------------------------------------------------------------------
+import           Graphics.Gloss
+import qualified Data.List      as List
+import qualified Data.Map       as Map
+import           Data.Ord       (comparing)
+import qualified Data.Vector    as V
+import           Control.Lens
+import           Text.Printf
+------------------------------------------------------------------------------
+import           Data.Ephys.Position
+import           Data.Ephys.TrackPosition
+import           Data.Ephys.Spike
 
-import Graphics.Gloss
-import qualified Data.List as List
-import qualified Data.Map as Map
-import Control.Lens
-import Text.Printf
-
+------------------------------------------------------------------------------
 rad2Deg :: Float -> Float
 rad2Deg = (* (-180 / pi))
 
@@ -81,16 +85,17 @@ drawPos p = drawArrowFloat
             (r2 $ p^.location.x, r2 $ p^.location.y) (r2 $ p^.speed) (rad2Deg . r2 $ p^.heading)
             0.01 0.08 0.04
     
-drawField :: Field Double -> Picture
+drawField :: LabeledField Double -> Picture
 drawField field =
-  pictures $ map (uncurry drawTrackPos) (Map.toList $ Map.map r2 field)
+  pictures . map (uncurry drawTrackPos) $
+  map (\(x,y) -> (x,r2 y)) (V.toList field)
 
-drawNormalizedField :: Field Double -> Picture
+drawNormalizedField :: LabeledField Double -> Picture
 drawNormalizedField field =
   pictures $ map (uncurry drawTrackPos)
-  (Map.toList $ Map.map  ((*fMax) . r2) field)
+  (map  (\(x,y) -> (x,(*fMax) . r2 $ y)) $ V.toList field)
     where fMax :: Float
-          fMax = r2 $ 1 / Map.foldl' max 0.1 field
+          fMax = r2 $ 1 / V.foldl' (\a (_,v) -> max a v ) 0.1 field
                  
 setAlpha :: Color -> Float -> Color
 setAlpha c alpha = case rgbaOfColor c of
@@ -100,13 +105,13 @@ writePos :: Position -> String
 writePos pos = printf "Conf: %s  T: %f  x: %f  y: %f  (Pos)\n"
                (show $ pos^.posConfidence)(pos^.posTime)(pos^.location.x)(pos^.location.y)
 
-writeField :: Field Double -> String
-writeField field =
+writeField :: LabeledField Double -> String
+writeField labeledField =
   printf "x: %f  y: %f  dir: %s (TrackPos)\n" tX tY tD
---  printf "head snd: %f (TrackPos)\n" headP
   where
-    modePos = fst . List.head . List.sortBy (\a b -> compare (snd b) (snd a)) . Map.toList $ field
+    f = V.toList labeledField
+    modePos = fst . List.head . List.sortBy (comparing snd) $ f
     tX = modePos^.trackBin.binLoc.x
     tY = modePos^.trackBin.binLoc.y
     tD = show $ modePos^.trackDir
---    headP = snd . List.head . Map.toList $ field
+

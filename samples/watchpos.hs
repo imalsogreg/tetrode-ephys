@@ -2,36 +2,49 @@
 
 module Main where
 
-import Data.Ephys.GlossPictures
-
-import Data.Ephys.OldMWL.ParsePFile
-import Data.Ephys.Position
-import Data.Ephys.TrackPosition
-
-import Control.Lens
-import Graphics.Gloss
+------------------------------------------------------------------------------
+import           Control.Lens
 import qualified Data.Map as Map
-import Graphics.Gloss.Interface.IO.Game
+import qualified Data.Vector as V
+------------------------------------------------------------------------------
+import           Graphics.Gloss
+import           Graphics.Gloss.Interface.IO.Game
+------------------------------------------------------------------------------
+import           Data.Ephys.GlossPictures
+import           Data.Ephys.OldMWL.ParsePFile
+import           Data.Ephys.Position
+import           Data.Ephys.TrackPosition
 
-type World = (Float, Position, Track, Field Double)
-    
+------------------------------------------------------------------------------
+-- Current time, current pos, track segs, occupancy)
+type World = (Float, Position, Track, Field)
+
+
+------------------------------------------------------------------------------
+-- The default track for caillou's Nov 28 sample data.
 myTrack :: Track
 myTrack = circularTrack (0,0) 0.75 0 0.2 0.25
 
+
+------------------------------------------------------------------------------
 gScale :: Float
 gScale = 200
 
+
+------------------------------------------------------------------------------
 main :: IO ()
 main = playIO (InWindow "My Window" (400,400) (10,10))
        white
        60
        (0,p0,t0,f0)
-       drawWorld
-       (eventUpdateWorld)
+       (drawWorld :: World -> IO Picture)
+       (eventUpdateWorld :: Event -> World -> IO World)
        (timeUpdateWorld)
-  where p0 = Position 0 (Location 0 0 0) (Angle 0 0 0) 0 0 ConfSure someZeros someZeros (-1/0) (Location 0 0 0):: Position
+  where p0 = Position 0 (Location 0 0 0)
+             (Angle 0 0 0) 0 0 ConfSure someZeros someZeros
+             (-1/0) (Location 0 0 0):: Position
         t0 = myTrack
-        f0 = Map.fromList [ (tp,0) | tp <- allTrackPos t0 ]
+        f0 = V.replicate (length $ allTrackPos t0) 0 :: Field
         someZeros = take 20 . repeat $ 0
 
 eventUpdateWorld :: Event -> World -> IO World
@@ -52,5 +65,7 @@ timeUpdateWorld :: Float -> World -> IO World
 timeUpdateWorld t (now,p,track,occ) = return (now+t,p,track,occ)
 
 drawWorld :: World -> IO Picture
-drawWorld (now,p,t,occ) = do print p
-                             return $ Scale gScale gScale $ pictures [drawTrack t, drawNormalizedField occ, drawPos p]
+drawWorld (now,p,t,occ) =
+  do print p
+     return . Scale gScale gScale $
+       pictures [drawTrack t, drawNormalizedField occ, drawPos p]

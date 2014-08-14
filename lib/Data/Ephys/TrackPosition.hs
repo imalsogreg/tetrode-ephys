@@ -2,15 +2,18 @@
 
 module Data.Ephys.TrackPosition where
 
+------------------------------------------------------------------------------
+import           Control.Lens
+import           Control.Applicative ((<$>),(<*>))
+import           Data.Graph
+import           Data.List           (sortBy)
+import qualified Data.Map            as Map
+import qualified Data.Vector         as V
+------------------------------------------------------------------------------
 import Data.Ephys.Position
 
-import Data.Graph
-import Data.List (sortBy)
-import qualified Data.Map as Map
-import Control.Lens
-import Control.Applicative ((<$>),(<*>))
---import qualified Data.Trees.KdTree as KD
 
+------------------------------------------------------------------------------
 data TrackBin = TrackBin { _binName :: !String
                          , _binLoc  :: !Location
                          , _binDir  :: !Double -- radians
@@ -41,15 +44,21 @@ $(makeLenses ''TrackSpec)
 $(makeLenses ''Track)
 $(makeLenses ''TrackPos)
 
-allTrackPos :: Track -> [TrackPos]
-allTrackPos t = [TrackPos bin dir ecc | bin <- t^.trackBins
-                                      , dir <- [Outbound,Inbound]
-                                      , ecc <- [InBounds,OutOfBounds]]
+allTrackPos :: Track -> V.Vector TrackPos
+allTrackPos t =
+  V.fromList [TrackPos bin dir ecc | bin <- t^.trackBins
+                                   , dir <- [Outbound,Inbound]
+                                   , ecc <- [InBounds,OutOfBounds]]
 
 -- Use mapping from track bin to a to model 'fields' in general
 -- ie an instantaneous occupancy field, a trial-sum occupancy
 -- field, or a spike rate field
-type Field a = Map.Map TrackPos a
+type Field = V.Vector Double
+
+type LabeledField a = V.Vector (TrackPos, a)
+
+labelField :: Track -> Field -> LabeledField Double
+labelField t f = V.zip (allTrackPos t) f
 
 trackFromSpec :: TrackSpec 
                  -> Double -- track width in metres
@@ -61,8 +70,9 @@ trackFromSpec = -- TODO
 data PosKernel = PosDelta
                | PosGaussian Double
 
+------------------------------------------------------------------------------
 -- Turn a position into an instantaneous field
-posToField :: Track -> Position -> PosKernel -> Field Double
+posToField :: Track -> Position -> PosKernel -> Field
 posToField t pos kern =
     let distSq bin = locSqDist (pos^.location) (bin^.binLoc)
         binC       = trackClosestBin t pos
@@ -79,11 +89,13 @@ posToField t pos kern =
             if (tp^.trackEcc) == ecc binC && (tp^.trackDir) == tDir
             then exp( (-1) / (2 * sd * sd) * distSq (tp^.trackBin)  )
             else 0
-        totalVal = sum $ map trackPosValUnNormalized (allTrackPos t)
+        totalVal = V.foldl (\a tp -> a +  trackPosValUnNormalized tp) 0
+                   (allTrackPos t :: V.Vector TrackPos)
+        trackPosVal :: TrackPos -> Double
         trackPosVal tp = if totalVal > 0
                          then trackPosValUnNormalized tp / totalVal
-                         else 1/ (fromIntegral $ length(allTrackPos t))
-     in Map.fromList $ zip (allTrackPos t) (map trackPosVal (allTrackPos t))
+                         else 1/ (fromIntegral $ V.length (allTrackPos t))
+     in (V.map trackPosVal (allTrackPos t))
 
 {- I don't think I use this anywhere.  And it looks wrong in ecc
 posToTrackPos :: Track  -> Position -> Maybe TrackPos
@@ -135,6 +147,6 @@ circularTrack (cX,cY) r h w tau =
                      w
 
 ------------------------------------------------------------------------------
-updateField :: (a -> a -> a) -> Field a -> Field a -> Field a
-updateField f a b = let r = Map.unionWith f a b in r `seq` r
+updateField :: (Double->Double->Double) -> Field -> Field -> Field
+updateField = V.zipWith
 {-# INLINE updateField #-}
