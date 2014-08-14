@@ -44,7 +44,7 @@ main = playIO (InWindow "My Window" (400,400) (10,10))
              (Angle 0 0 0) 0 0 ConfSure someZeros someZeros
              (-1/0) (Location 0 0 0):: Position
         t0 = myTrack
-        f0 = V.replicate (length $ allTrackPos t0) 0 :: Field
+        f0 = V.replicate (V.length $ allTrackPos t0) 0 :: Field
         someZeros = take 20 . repeat $ 0
 
 eventUpdateWorld :: Event -> World -> IO World
@@ -68,4 +68,4 @@ drawWorld :: World -> IO Picture
 drawWorld (now,p,t,occ) =
   do print p
      return . Scale gScale gScale $
-       pictures [drawTrack t, drawNormalizedField occ, drawPos p]
+       pictures [drawTrack t, drawNormalizedField (labelField myTrack occ), drawPos p]

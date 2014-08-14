@@ -94,7 +94,8 @@ Executable watchpos
                   pipes,
                   lens,
                   gloss (>=1.8.1.1 && <2),
-                  tetrode-ephys 
+                  tetrode-ephys,
+                  vector
 
 Executable watchfield
   Default-Language: Haskell2010
@@ -111,7 +112,8 @@ Executable watchfield
                   gloss (>=1.8.1.1 && <2),
                   bytestring,
                   tetrode-ephys,
-                  pipes-rt
+                  pipes-rt,
+                  vector
 
 Executable mwlfileutil
   Default-Language: Haskell2010
