@@ -12,8 +12,8 @@ import qualified Data.Serialize as S
 import qualified Data.Binary as B
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Cereal()
-import Data.Vector.Binary()
+import Data.Vector.Cereal
+import Data.Vector.Binary
 import Data.Ephys.EphysDefs
 
 type Waveform = U.Vector Voltage  -- This should be the waveform from Data.Ephys.Waveform probably?
@@ -55,23 +55,34 @@ instance B.Binary TrodeSpike where
     waveforms <- B.get
     return $ TrodeSpike name opts time waveforms
 
+
+------------------------------------------------------------------------------
 spikePeakIndex :: TrodeSpike -> Int
-spikePeakIndex s = let chanMaxIs   = V.map U.maxIndex (spikeWaveforms s) :: V.Vector Int
-                       chanMax     = V.map U.maximum  (spikeWaveforms s) :: V.Vector Voltage
-                       chanWithMax = V.maxIndex chanMax                  :: Int
-                   in chanMaxIs V.! chanWithMax
-  
+spikePeakIndex s =
+  let chanMaxIs   = V.map U.maxIndex (spikeWaveforms s) :: V.Vector Int
+      chanMax     = V.map U.maximum  (spikeWaveforms s) :: V.Vector Voltage
+      chanWithMax = V.maxIndex chanMax                  :: Int
+  in chanMaxIs V.! chanWithMax
+
+
+------------------------------------------------------------------------------
 chanPeakIndexAndV :: U.Vector Voltage -> (Int,Voltage)
 chanPeakIndexAndV vs = U.foldl1' maxBySnd $ U.zip (U.fromList [0..nSamps]) vs
   where nSamps = U.length vs
 
+
+------------------------------------------------------------------------------
 maxBySnd :: Ord b => (a,b) -> (a,b) -> (a,b)
 maxBySnd a@(_,v) b@(_,v') = if v > v' then a else b
 
+
+------------------------------------------------------------------------------
 spikeAmplitudes  :: TrodeSpike -> V.Vector Voltage
 spikeAmplitudes s = V.map (U.! i) (spikeWaveforms s)
   where i = spikePeakIndex s
 
+
+------------------------------------------------------------------------------
 -- |Representation of tetroe-recorded AP features
 data SpikeModel = SpikeModel { mSpikeTime          :: ExperimentTime
                              , mSpikePeakAmp       :: U.Vector Voltage
@@ -81,6 +92,8 @@ data SpikeModel = SpikeModel { mSpikeTime          :: ExperimentTime
 -- TODO: Do I need the rest of the mwl params?  maxwd? maxh?
 -- What about things like 'noise'?  Or 'deviation from the cluster'?
 
+
+------------------------------------------------------------------------------
 -- |Polar coordinates representation of tetrode-recorded AP
 data PolarSpikeModel = PolarSpikeModel { pSpikeTime      :: ExperimentTime
                                        , pSpikeMagnitute :: Voltage

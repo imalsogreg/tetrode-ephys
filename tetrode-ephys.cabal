@@ -36,18 +36,16 @@ Library
     , bytestring
     , parsec
     , hashable
-    , pipes == 4.1.1
-    , binary
+    , pipes
+    , binary == 0.7.1.0
     , pipes-parse >= 3.0.1
     , pipes-binary >= 0.4
     , pipes-bytestring
     , transformers == 0.3.0.0
     , unordered-containers
     , cpu
-    , hmatrix
     , lens
     , pipes-rt
-    , KdTree
     , gloss
     , safe
     , data-binary-ieee754
@@ -184,7 +182,7 @@ Executable drawKD
     , bytestring
     , parsec
     , hashable
-    , pipes == 4.1.1
+    , pipes
     , binary
     , pipes-parse >= 3.0.1
     , pipes-binary >= 0.4
@@ -192,10 +190,8 @@ Executable drawKD
     , transformers == 0.3.0.0
     , unordered-containers
     , cpu
-    , hmatrix
     , lens
     , pipes-rt
-    , KdTree
     , gloss
     , safe
     , data-binary-ieee754

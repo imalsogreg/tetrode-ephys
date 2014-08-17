@@ -9,7 +9,7 @@ import Control.Lens
 import Pipes
 import Data.Serialize
 import GHC.Generics
-import qualified Data.Trees.KdTree as KD
+--import qualified Data.Trees.KdTree as KD
 import Data.Complex
 
 data Location = Location {_x :: !Double, _y :: !Double, _z :: !Double}
@@ -108,6 +108,7 @@ locSqDist a b = (b^.z - a^.z)^(2::Int)
 locDist :: Location -> Location -> Double
 locDist a b = sqrt $ locSqDist a b
 
+{-
 -- TODO - risky to depend on KdTree?  Not very active package
 instance KD.Point Location where
   dimension   = const 3
@@ -119,6 +120,7 @@ instance KD.Point Location where
   dist2 a1 a2 = (a2 ^. x - a1 ^. x)^(2::Int) +
                 (a2 ^. y - a1 ^. y)^(2::Int) +
                 (a2 ^. z - a1 ^. z)^(2::Int)
+-}
 
 mean :: [Double] -> Double
 mean xs = sum xs / (fromIntegral . length $ xs)

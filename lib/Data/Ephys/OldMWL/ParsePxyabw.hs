@@ -23,9 +23,9 @@ import qualified Pipes.Binary as PBinary hiding (Get)
 import Data.Binary.Get (getWord32le, getWord16le,getWord64le, getWord64be)
 import qualified Pipes.ByteString as PBS 
 import qualified Data.Text as T
-import Data.Packed.Matrix
+--import Data.Packed.Matrix
 import qualified Data.List as List
-import Data.Packed.Vector (Vector, toList)
+--import Data.Packed.Vector (Vector, toList)
 import Control.Applicative
 import Data.Binary.IEEE754
 

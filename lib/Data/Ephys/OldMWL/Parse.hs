@@ -24,9 +24,9 @@ import Pipes.Binary (decoded, decodeGetL,decodeGet)
 import Data.Binary.Get (getWord32le, getWord16le)
 import qualified Pipes.ByteString as PBS 
 import qualified Data.Text as T
-import Data.Packed.Matrix
+--import Data.Packed.Matrix
 import qualified Data.List as List
-import Data.Packed.Vector (Vector, toList)
+-- import Data.Packed.Vector (Vector, toList)
 
 import Pipes.Parse
 

@@ -13,8 +13,8 @@ import           Data.Binary.Put           (putWord16le,putWord32le)
 import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.List                 as List
 import           Data.Maybe                (listToMaybe)
-import           Data.Packed.Matrix        ((><))
-import qualified Data.Packed.Matrix        as HMatrix
+--import           Data.Packed.Matrix        ((><))
+--import qualified Data.Packed.Matrix        as HMatrix
 import qualified Data.Text                 as T
 import qualified Data.Vector               as V
 import qualified Data.Vector.Generic       as VG
