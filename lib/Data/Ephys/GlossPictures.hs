@@ -15,13 +15,9 @@ import           Data.Ephys.Position
 import           Data.Ephys.TrackPosition
 import           Data.Ephys.Spike
 
+
+
 ------------------------------------------------------------------------------
-rad2Deg :: Float -> Float
-rad2Deg = (* (-180 / pi))
-
-r2 :: Double -> Float
-r2 = realToFrac
-
 trackPosPicture :: TrackPos -> Picture
 trackPosPicture (TrackPos bin bir ecc) = trackBinFrame bin Line
 
@@ -115,3 +111,12 @@ writeField labeledField =
     tY = modePos^.trackBin.binLoc.y
     tD = show $ modePos^.trackDir
 
+
+------------------------------------------------------------------------------
+rad2Deg :: Float -> Float
+rad2Deg = (* (-180 / pi))
+
+------------------------------------------------------------------------------
+r2 :: (Real a, Fractional b) => a -> b
+r2 = realToFrac
+{-# SPECIALIZE r2 :: Double -> Float #-}
