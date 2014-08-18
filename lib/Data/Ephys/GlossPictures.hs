@@ -41,19 +41,6 @@ drawTrack t =
                        ((r2 $ bin^.binZ - bin^.binA)/2)
                        (rad2Deg . r2 $ bin^.binDir) 0.01 0.08 0.04
 
-{-
-drawArrow :: (Double,Double) -> Double -> Double -> Double -> Double -> Double -> Picture
-drawArrow (baseX,baseY) mag ang thickness headLen headThickness =
-  let body = Polygon [(0, - r2 thickness/2)
-                     ,(r2 mag - r2 headLen, - r2 thickness/2)
-                     ,(r2 mag,0)
-                     ,(r2 mag - r2 headLen, r2 thickness/2)
-                     ,(0, r2 thickness/2)]
-      head = Polygon [(r2 mag - r2 headLen, - r2 headThickness/2)
-                     ,(r2 mag,0)
-                     ,(r2 mag - r2 headLen, r2 headThickness/2)]
-  in Translate (r2 baseX) (r2 baseY) . Rotate (r2 ang) $ pictures [body,head]
--}
 
 drawArrowFloat :: (Float,Float) -> Float -> Float -> Float -> Float -> Float -> Picture
 drawArrowFloat (baseX,baseY) mag ang thickness headLen headThickness =
@@ -92,6 +79,24 @@ drawNormalizedField field =
   (map  (\(x,y) -> (x,(*fMax) . r2 $ y)) $ V.toList field)
     where fMax :: Float
           fMax = r2 $ 1 / V.foldl' (\a (_,v) -> max a v ) 0.1 field
+
+labelNormalizedField :: LabeledField Double -> Picture
+labelNormalizedField field =
+  pictures . map labelTrackPos . V.toList $ field
+
+------------------------------------------------------------------------------
+labelTrackPos :: (TrackPos, Double) -> Picture
+labelTrackPos (TrackPos (TrackBin _ (Location x y _) _ _ _ _ ) dir ecc,v) =
+  translate (r2 x) (r2 y+offsetY)
+  . scale 0.0006 0.0006 . Text . take 4
+  $ show v
+  where
+    c = 0.04
+    offsetY = case (dir,ecc) of
+          (Outbound,InBounds)    ->  3 * c
+          (Inbound, InBounds)    ->  1 * c
+          (Outbound,OutOfBounds) -> -1 * c 
+          (Inbound, OutOfBounds) -> -3 * c
                  
 setAlpha :: Color -> Float -> Color
 setAlpha c alpha = case rgbaOfColor c of
