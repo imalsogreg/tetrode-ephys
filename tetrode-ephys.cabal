@@ -26,30 +26,31 @@ Library
   Ghc-Options:     -O2 -threaded -fprof-auto -funbox-strict-fields -rtsopts "-with-rtsopts=-N4"
   Build-Depends:
     base   (>= 4 && <= 5)
+    , binary == 0.7.1.0
+    , bytestring
     , containers
     , directory
     , cereal
-    , vector
-    , vector-binary-instances
-    , text
-    , time
-    , bytestring
-    , parsec
+    , cmdargs
+    , cpu
+    , data-binary-ieee754
+    , gloss
     , hashable
+    , lens
+    , parsec
     , pipes
-    , binary == 0.7.1.0
     , pipes-parse >= 3.0.1
     , pipes-binary >= 0.4
     , pipes-bytestring
+    , pipes-rt
+    , safe
+    , safecopy >= 0.8 && < 0.9
+    , text
+    , time
     , transformers == 0.3.0.0
     , unordered-containers
-    , cpu
-    , lens
-    , pipes-rt
-    , gloss
-    , safe
-    , data-binary-ieee754
-    , cmdargs
+    , vector
+    , vector-binary-instances
   Exposed-Modules:
     Data.Ephys
     Data.Ephys.EphysDefs
