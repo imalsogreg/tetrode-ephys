@@ -16,8 +16,12 @@ import Data.Vector.Cereal
 import Data.Vector.Binary
 import Data.Ephys.EphysDefs
 
+
+------------------------------------------------------------------------------
 type Waveform = U.Vector Voltage  -- This should be the waveform from Data.Ephys.Waveform probably?
 
+
+------------------------------------------------------------------------------
 -- |Representation of an action potential recorded on a tetrode
 data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Int
                              , spikeTrodeOptsHash  :: !Int
@@ -25,35 +29,6 @@ data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Int
                              , spikeWaveforms      :: V.Vector Waveform
                              }
                   deriving (Eq, Show)
-
-toRelTime :: TrodeSpike -> Double
-toRelTime TrodeSpike{..} = spikeTime
-
-instance S.Serialize TrodeSpike where
-  put TrodeSpike{..} = do
-    S.put spikeTrodeName
-    S.put spikeTrodeOptsHash
-    S.put spikeTime
-    S.put spikeWaveforms
-  get = do
-    name <- S.get
-    opts <- S.get
-    time <- S.get
-    waveforms <- S.get
-    return $ TrodeSpike name opts time waveforms
-
-instance B.Binary TrodeSpike where
-  put TrodeSpike{..} = do
-    B.put spikeTrodeName
-    B.put spikeTrodeOptsHash
-    B.put spikeTime
-    B.put spikeWaveforms
-  get = do
-    name <- B.get
-    opts <- B.get
-    time <- B.get
-    waveforms <- B.get
-    return $ TrodeSpike name opts time waveforms
 
 
 ------------------------------------------------------------------------------
@@ -64,6 +39,16 @@ spikePeakIndex s =
       chanWithMax = V.maxIndex chanMax                  :: Int
   in chanMaxIs V.! chanWithMax
 
+
+------------------------------------------------------------------------------
+chanSpikeWidth :: U.Vector Voltage -> Int
+chanSpikeWidth vs =
+  let tailPts = U.drop (U.maxIndex vs + 1) vs
+      iTailMin                             -- Index of valley after peak
+        | U.null tailPts = 0
+        | otherwise      = 1 + U.minIndex tailPts
+  in iTailMin
+  
 
 ------------------------------------------------------------------------------
 chanPeakIndexAndV :: U.Vector Voltage -> (Int,Voltage)
@@ -101,12 +86,48 @@ data PolarSpikeModel = PolarSpikeModel { pSpikeTime      :: ExperimentTime
                                        } deriving (Show)
 
 
+------------------------------------------------------------------------------
 -- This should be part of arte, not tetrode-ephys?  It's about recording
 -- But I need it to decode files...
 data TrodeAcquisitionOpts = TrodeAcquisitionOpts { spikeFilterSpec :: FilterSpec
                                                  , spikeThresholds :: [Voltage]
                                                  } deriving (Eq, Show)
 
+
+------------------------------------------------------------------------------
+toRelTime :: TrodeSpike -> Double
+toRelTime TrodeSpike{..} = spikeTime
+
+------------------------------------------------------------------------------
+instance S.Serialize TrodeSpike where
+  put TrodeSpike{..} = do
+    S.put spikeTrodeName
+    S.put spikeTrodeOptsHash
+    S.put spikeTime
+    S.put spikeWaveforms
+  get = do
+    name <- S.get
+    opts <- S.get
+    time <- S.get
+    waveforms <- S.get
+    return $ TrodeSpike name opts time waveforms
+
+------------------------------------------------------------------------------
+instance B.Binary TrodeSpike where
+  put TrodeSpike{..} = do
+    B.put spikeTrodeName
+    B.put spikeTrodeOptsHash
+    B.put spikeTime
+    B.put spikeWaveforms
+  get = do
+    name <- B.get
+    opts <- B.get
+    time <- B.get
+    waveforms <- B.get
+    return $ TrodeSpike name opts time waveforms
+
+
+------------------------------------------------------------------------------
 -- TODO: a test spike
 mySpike :: IO TrodeSpike
 mySpike = return $ TrodeSpike tName tOpts sTime sWF
