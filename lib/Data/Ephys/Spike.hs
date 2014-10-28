@@ -1,4 +1,8 @@
-{-# LANGUAGE BangPatterns, TypeSynonymInstances, RecordWildCards, NoMonomorphismRestriction #-}
+{-# LANGUAGE BangPatterns              #-}
+{-# LANGUAGE TypeSynonymInstances      #-}
+{-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE DeriveDataTypeable        #-}
 
 module Data.Ephys.Spike where
 
@@ -10,6 +14,7 @@ import Data.Time
 import Control.Monad (liftM)
 import qualified Data.Serialize as S
 import qualified Data.Binary as B
+import           Data.Typeable
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import Data.Vector.Cereal
@@ -24,7 +29,7 @@ data TrodeSpike = TrodeSpike { spikeTrodeName      :: !Int
                              , spikeTime           :: !ExperimentTime
                              , spikeWaveforms      :: V.Vector Waveform
                              }
-                  deriving (Eq, Show)
+                  deriving (Eq, Show, Typeable)
 
 toRelTime :: TrodeSpike -> Double
 toRelTime TrodeSpike{..} = spikeTime
