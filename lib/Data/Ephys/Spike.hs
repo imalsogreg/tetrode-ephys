@@ -3,7 +3,7 @@
 module Data.Ephys.Spike where
 
 import Data.Ephys.Timeseries.Filter
-
+import Data.Ord (comparing)
 import Data.Text hiding (zip, map,foldl1')
 import Data.Text.Encoding
 import Data.Time
@@ -39,7 +39,13 @@ spikePeakIndex s =
       chanWithMax = V.maxIndex chanMax                  :: Int
   in chanMaxIs V.! chanWithMax
 
+------------------------------------------------------------------------------
+spikeWidth :: TrodeSpike -> Int
+spikeWidth s =
+  let iChanMax       = V.maxIndexBy (comparing U.maximum) (spikeWaveforms s)
+  in  chanSpikeWidth $ spikeWaveforms s V.! iChanMax
 
+                       
 ------------------------------------------------------------------------------
 chanSpikeWidth :: U.Vector Voltage -> Int
 chanSpikeWidth vs =
