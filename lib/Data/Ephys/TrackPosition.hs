@@ -8,6 +8,7 @@ import           Control.Applicative ((<$>),(<*>))
 import           Data.Graph
 import           Data.List           (sortBy)
 import qualified Data.Map            as Map
+import           Data.SafeCopy  
 import qualified Data.Vector         as V
 ------------------------------------------------------------------------------
 import Data.Ephys.Position
@@ -150,3 +151,10 @@ circularTrack (cX,cY) r h w tau =
 updateField :: (Double->Double->Double) -> Field -> Field -> Field
 updateField = V.zipWith
 {-# INLINE updateField #-}
+
+{-  -- TODO - serialize TrackPos
+putTrackPos :: Put TrackPos
+putTrackPos tp = do
+  put $ tp^.
+
+-}
