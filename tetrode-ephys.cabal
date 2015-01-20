@@ -47,7 +47,7 @@ Library
     , safecopy >= 0.8 && < 0.9
     , text
     , time
-    , transformers == 0.3.0.0
+    , transformers
     , unordered-containers
     , vector
     , vector-binary-instances
@@ -188,7 +188,7 @@ Executable drawKD
     , pipes-parse >= 3.0.1
     , pipes-binary >= 0.4
     , pipes-bytestring
-    , transformers == 0.3.0.0
+    , transformers
     , unordered-containers
     , cpu
     , lens
