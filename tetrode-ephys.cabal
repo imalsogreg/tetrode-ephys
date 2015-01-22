@@ -58,6 +58,7 @@ Library
     Data.Ephys.Cluster
     Data.Ephys.Position
     Data.Ephys.TrackPosition
+    Data.Ephys.TrackSpec
     Data.Ephys.PlaceCell
     Data.Ephys.PositionDecoding
     Data.Ephys.Timeseries
@@ -95,6 +96,12 @@ Executable watchpos
                   gloss (>=1.8.1.1 && <2),
                   tetrode-ephys,
                   vector
+
+Executable drawSpline
+  Default-Language: Haskell2010
+  Hs-Source-Dirs:   utils
+  Main-Is:          drawSpline.hs
+  Build-Depends:    base, gloss, tetrode-ephys
 
 Executable watchfield
   Default-Language: Haskell2010
