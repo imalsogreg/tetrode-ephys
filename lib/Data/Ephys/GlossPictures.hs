@@ -19,24 +19,38 @@ import           Data.Ephys.Spike
 
 ------------------------------------------------------------------------------
 trackPosPicture :: TrackPos -> Picture
-trackPosPicture (TrackPos bin bir ecc) = trackBinFrame bin Line
+trackPosPicture (TrackPos bin bir ecc) = trackBinFrame bin lineLoop
 
 trackBinFrame :: TrackBin -> ([(Float,Float)] -> Picture) -> Picture
 trackBinFrame b f = trackBinFrameDilated b f 1 
 
-trackBinFrameDilated :: TrackBin -> ([(Float,Float)] -> Picture) -> Float -> Picture
-trackBinFrameDilated (TrackBin _ (Location x y _) dir bStart bEnd w) picType d =
-    Translate (r2 x) (r2 y) $ Rotate (rad2Deg $ r2 dir) $
-    picType [(r2 bStart, (r2 w)/(-2)* d)
+trackBinFrameDilated :: TrackBin -> ([(Float,Float)] -> Picture) -> Float
+                        -> Picture
+trackBinFrameDilated (TrackBin _ (Location lx ly _) dir bStart bEnd w caps)
+  picType d =
+  case caps of
+    CapFlat (inAngle,outAngle) ->
+      let inNudge   = r2 $ (r2 w)/2 * sin inAngle * r2 d
+          outNudge  = r2 $ (r2 w)/2 * sin outAngle * r2 d
+          backLow   = (r2 bStart + inNudge, (r2 w)/(-2) * d)
+          backHigh  = (r2 bStart - inNudge, (r2 w)/2 * d) 
+          frontLow  = (r2 bEnd + outNudge, (r2 w)/(-2) * d)
+          frontHigh = (r2 bEnd - outNudge, (r2 w)/2 * d)
+      in Translate (r2 lx) (r2 ly) $ Rotate (rad2Deg $ r2 dir) $
+         picType [backLow,backHigh,frontHigh,frontLow]
+    CapCircle -> error "Not implemented: drawing circular track bin"
+
+{-
+(r2 bStart, (r2 w)/(-2)* d)
             ,(r2 bEnd,   (r2 w)/(-2)* d)
             ,(r2 bEnd,   (r2 w)/2* d)
             ,(r2 bStart, (r2 w)/2* d)
             ,(r2 bStart, (r2 w)/(-2)*d)
-            ]
+  -}          
 
 drawTrack :: Track -> Picture
 drawTrack t =
-  pictures $ map (flip trackBinFrame Line) (t ^. trackBins) ++ map binArrow (t^. trackBins)
+  pictures $ map (flip trackBinFrame lineLoop) (t ^. trackBins) --  ++ map binArrow (t^. trackBins)
   where binArrow bin = drawArrowFloat (r2 $ bin^.binLoc.x, r2 $ bin^.binLoc.y)
                        ((r2 $ bin^.binZ - bin^.binA)/2)
                        (rad2Deg . r2 $ bin^.binDir) 0.01 0.08 0.04
@@ -86,7 +100,7 @@ labelNormalizedField field =
 
 ------------------------------------------------------------------------------
 labelTrackPos :: (TrackPos, Double) -> Picture
-labelTrackPos (TrackPos (TrackBin _ (Location x y _) _ _ _ _ ) dir ecc,v) =
+labelTrackPos (TrackPos (TrackBin _ (Location x y _) _ _ _ _ _ ) dir ecc,v) =
   translate (r2 x) (r2 y+offsetY)
   . scale 0.0006 0.0006 . Text . take 4
   $ show v

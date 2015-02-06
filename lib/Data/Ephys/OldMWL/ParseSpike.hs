@@ -87,7 +87,7 @@ produceMWLSpikes si b =
 fileInfoToSpikeInfo :: FileInfo -> Either String SpikeFileInfo
 fileInfoToSpikeInfo fi@FileInfo{..} =
   case listToMaybe $ filter (\(n,_,_) -> n == "waveform") hRecordDescr of
-    Nothing                       -> Left "Bad FileInfo" -- TODO elaborate
+    Nothing                -> Left "Bad FileInfo" -- TODO elaborate
     Just (_,_,spikeNSamps) -> Right $ SpikeFileInfo
                                      (fromIntegral spikeNSamps) 4
                                      (fromIntegral spikeNSamps `div` 4)
@@ -99,7 +99,7 @@ produceMWLSpikesFromFile :: FilePath -> Producer MWLSpike IO ()
 produceMWLSpikesFromFile fn = do
   fi'     <- liftIO $ getFileInfo fn
   r       <- liftIO $ loadRawMWL fn
-  let si' =  join $ fileInfoToSpikeInfo <$> fi' :: Either String SpikeFileInfo
+  let si' =  join $ fileInfoToSpikeInfo <$> fi'
   case (r,si') of
     (Right (_,dataBits), Right si) ->
       dropResult $ produceMWLSpikes si dataBits

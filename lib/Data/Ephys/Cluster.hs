@@ -29,12 +29,13 @@ data PolarBound = PolarBound -- Placeholder
 
 instance Serialize PolarBound where
                            
-data ClusterMethod = ClustCartBound     !CartBound
-                   | ClustPolarBound    !PolarBound
-                   | ClustSoftCartesian 
-                   | ClustIntersection  ![ClusterMethod]
-                   | ClustUnion         ![ClusterMethod]
-                   deriving (Eq, Show,Generic)
+data ClusterMethod =
+  ClustCartBound       !CartBound
+  | ClustPolarBound    !PolarBound
+  | ClustSoftCartesian 
+  | ClustIntersection  ![ClusterMethod]
+  | ClustUnion         ![ClusterMethod]
+  deriving (Eq, Show,Generic)
 
 instance Serialize ClusterMethod where
 

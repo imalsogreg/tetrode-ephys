@@ -8,6 +8,7 @@ import           Control.Applicative ((<$>),(<*>))
 import           Data.Graph
 import           Data.List           (sortBy)
 import qualified Data.Map            as Map
+import           Data.Ord            (comparing)
 import           Data.SafeCopy  
 import qualified Data.Vector         as V
 ------------------------------------------------------------------------------
@@ -15,17 +16,21 @@ import Data.Ephys.Position
 
 
 ------------------------------------------------------------------------------
-data TrackBin = TrackBin { _binName :: !String
-                         , _binLoc  :: !Location
-                         , _binDir  :: !Double -- radians
-                         , _binA    :: !Double --
-                         , _binZ    :: !Double
-                         , _binWid  :: !Double
-                         } deriving (Eq, Ord, Show)
+data TrackBin =
+  TrackBin { _binName :: !String
+           , _binLoc  :: !Location
+           , _binDir  :: !Double -- radians
+           , _binA    :: !Double
+           , _binZ    :: !Double
+           , _binWid  :: !Double
+           , _binCaps :: !BinCaps
+           } deriving (Eq, Ord, Show)
+
+data BinCaps = CapCircle
+             | CapFlat (Double,Double)
+             deriving (Eq, Ord, Show)
 
 $(makeLenses ''TrackBin)
-
-data TrackSpec = TrackSpec { _keyPoints :: !Graph }  -- node :: (x,y), key :: String
 
 data Track = Track { _trackBins  :: [TrackBin]
                    } deriving (Eq, Show)
@@ -41,15 +46,14 @@ data TrackPos = TrackPos { _trackBin :: !TrackBin
                          , _trackEcc :: !TrackEccentricity
                          } deriving (Eq, Ord, Show)
 
-$(makeLenses ''TrackSpec)
 $(makeLenses ''Track)
 $(makeLenses ''TrackPos)
 
 allTrackPos :: Track -> V.Vector TrackPos
 allTrackPos t =
   V.fromList [TrackPos bin dir ecc | bin <- t^.trackBins
-                                   , dir <- [Outbound,Inbound]
-                                   , ecc <- [InBounds,OutOfBounds]]
+                                   , dir <- [Inbound,Outbound]
+                                   , ecc <- [OutOfBounds,InBounds]]
 
 -- Use mapping from track bin to a to model 'fields' in general
 -- ie an instantaneous occupancy field, a trial-sum occupancy
@@ -61,13 +65,6 @@ type LabeledField a = V.Vector (TrackPos, a)
 labelField :: Track -> Field -> LabeledField Double
 labelField t f = V.zip (allTrackPos t) f
 
-trackFromSpec :: TrackSpec 
-                 -> Double -- track width in metres
-                 -> Double -- bin length in meters
-                 -> Track
-trackFromSpec = -- TODO 
-  error "Not yet implemented: track from spec" 
-
 data PosKernel = PosDelta
                | PosGaussian Double
 
@@ -77,8 +74,12 @@ posToField :: Track -> Position -> PosKernel -> Field
 posToField t pos kern =
     let distSq bin = locSqDist (pos^.location) (bin^.binLoc)
         binC       = trackClosestBin t pos
-        tDir = if cos (pos^.heading - binC^.binDir) > 0 then Outbound else Inbound
-        ecc b = if (abs y') > (b^.binWid / 2) then OutOfBounds else InBounds
+        tDir
+          | cos (pos^.heading - binC^.binDir) > 0 = Outbound
+          | otherwise                             = Inbound
+        ecc b
+          | (abs y') > (b^.binWid / 2) = OutOfBounds 
+          | otherwise                  = InBounds
           where (_,y') = relativeCoords b (pos^.location^.x, pos^.location^.y)
         trackPosValUnNormalized :: TrackPos -> Double
         trackPosValUnNormalized tp = case kern of
@@ -98,32 +99,23 @@ posToField t pos kern =
                          else 1/ (fromIntegral $ V.length (allTrackPos t))
      in (V.map trackPosVal (allTrackPos t))
 
-{- I don't think I use this anywhere.  And it looks wrong in ecc
-posToTrackPos :: Track  -> Position -> Maybe TrackPos
-posToTrackPos track pos =
-  let binC = trackClosestBin track pos
-      (x',y') = relativeCoords binC (pos^.location^.x, pos^.location^.y)
-      ecc = if (abs x') > (binC^.binWid/2) then OutOfBounds else InBounds
-      tDir = if cos (pos^.heading - binC^.binDir) > 0 then Outbound else Inbound
-      inBin = x' >= (binC^.binA) && x' <= binC^.binZ in
-  case inBin of
-    False -> Nothing
-    True  -> Just $ TrackPos binC tDir ecc
--}
-
+------------------------------------------------------------------------------
 relativeCoords :: TrackBin -> (Double,Double) -> (Double,Double)
-relativeCoords bin (x',y') = let th = (-1 * bin^.binDir)
-                                 dx = x' - bin^.binLoc.x
-                                 dy = y' - bin^.binLoc.y
-                             in
-  (dx * cos th - dy * sin th, dx * sin th + dy * cos th) --TODO check rotation matrix
+relativeCoords bin (x',y') =
+  let th = (-1 * bin^.binDir)
+      dx = x' - bin^.binLoc.x
+      dy = y' - bin^.binLoc.y
+  in
+   (dx * cos th - dy * sin th, dx * sin th + dy * cos th)
 
 trackClosestBin :: Track -> Position -> TrackBin
 trackClosestBin track pos =
-  head $ sortBy (\b0 b1 -> compare (posBinDistSq pos b0) (posBinDistSq pos b1)) (track^.trackBins)
+  head . sortBy (comparing (posBinDistSq pos)) $
+  (track ^. trackBins)
 
 posBinDistSq :: Position -> TrackBin -> Double
-posBinDistSq pos bin = locSqDist (bin^.binLoc) (pos^.location)
+posBinDistSq pos bin = locSqDist (bin^.binLoc)
+                       (pos^.location)
 
 circularTrack :: (Double,Double) -- (x,y) in meters
                  -> Double       -- radius in meters
@@ -137,16 +129,18 @@ circularTrack (cX,cY) r h w tau =
     fI = fromIntegral
     circumference = 2*pi*r
     nPts = floor (circumference / tau) :: Int
+    tau' = circumference / fromIntegral nPts
     names = map (toEnum . (+  fromEnum 'A')) [0..nPts-1]
     thetaIncr = 2*pi/ fI nPts
     thetaCs = [0, thetaIncr .. 2*pi-thetaIncr]
     aPoint :: Double -> String -> TrackBin
-    aPoint theta n = TrackBin n
-                     (Location (r * cos theta + cX) (r * sin theta + cY) h)
-                     (theta + pi/2)
-                     (-1 * tau / 2) (tau / 2)
-                     w
-
+    aPoint theta n =
+      TrackBin n
+      (Location (r * cos theta + cX) (r * sin theta + cY) h)
+      (theta + pi/2)
+      (-1 * tau' / 2) (tau' / 2)
+      w
+      (CapFlat (thetaIncr/(-2), thetaIncr/2))
 ------------------------------------------------------------------------------
 updateField :: (Double->Double->Double) -> Field -> Field -> Field
 updateField = V.zipWith

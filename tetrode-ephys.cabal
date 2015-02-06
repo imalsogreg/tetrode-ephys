@@ -34,8 +34,12 @@ Library
     , cmdargs
     , cpu
     , data-binary-ieee754
+    , diagrams >= 1.2 && < 1.3
+    , diagrams-lib >= 1.2 && < 1.3
+    , diagrams-rasterific >= 0.1 && < 0.2
     , gloss
     , hashable
+    , JuicyPixels
     , lens
     , parsec
     , pipes
@@ -63,6 +67,7 @@ Library
     Data.Ephys.PositionDecoding
     Data.Ephys.Timeseries
     Data.Ephys.Timeseries.Filter
+    Data.Ephys.DiagramsPictures
     Data.Ephys.GlossPictures
     Data.Ephys.OldMWL.Header
     Data.Ephys.OldMWL.FileInfo
