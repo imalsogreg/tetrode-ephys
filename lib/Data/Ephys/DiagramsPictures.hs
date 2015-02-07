@@ -3,8 +3,9 @@
 module Data.Ephys.DiagramsPictures where
 
 ------------------------------------------------------------------------------
-import Control.Lens hiding ((#))
+import Control.Lens hiding ((#), at)
 import Codec.Picture
+import qualified Data.Vector as V
 ------------------------------------------------------------------------------
 import Diagrams.Prelude hiding (location)
 import Diagrams.Coordinates
@@ -72,6 +73,25 @@ testDraw :: Diagram B R2 -> IO ()
 testDraw d = writePng "/home/greghale/test.png" (renderDia Rasterific opts d)
   where opts = RasterificOptions Absolute
 
+fieldDiagram :: LabeledField Double -> Diagram B R2
+fieldDiagram = mconcat . V.toList . V.map trackFieldBin 
+
+------------------------------------------------------------------------------
+trackFieldBin :: (TrackPos, Double) -> Diagram B R2
+trackFieldBin (p,v) = translate (r2 $ unp2 binCenter) dia
+  where baseColor = if p^.trackDir == Outbound then blue      else red
+        ecc       = p^.trackEcc
+        col       = if ecc == InBounds then baseColor else yellow
+        binCenter    = trackBinCenter (p^.trackBin)
+        dia       = case ecc of
+          InBounds    -> opacity v . fc col .
+                         fromVertices $
+                         trackBinPathDilated (p^.trackBin) 1 (-0.5,0.5)
+          OutOfBounds -> opacity v . fc col .
+                         fromVertices $
+                         trackBinPathDilated (p^.trackBin) 0.5 (0.6, 0.8)
+                                
+          
 testTrack = circularTrack (0,0) 0.57 0.5 0.25 0.2
 
 testBin = head $ testTrack^.trackBins

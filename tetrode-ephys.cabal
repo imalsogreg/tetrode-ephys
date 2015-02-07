@@ -38,9 +38,11 @@ Library
     , diagrams-lib >= 1.2 && < 1.3
     , diagrams-rasterific >= 0.1 && < 0.2
     , gloss
+    , GLURaw <= 1.4.0.1
     , hashable
     , JuicyPixels
     , lens
+    , OpenGLRaw <= 1.5
     , parsec
     , pipes
     , pipes-parse >= 3.0.1
@@ -89,6 +91,12 @@ Executable clusters
                   text,
                   tetrode-ephys,
                   pipes-rt
+
+Executable decodeDiagramMovie
+  Default-Language: Haskell2010
+  Hs-Source-Dirs:   samples
+  Main-Is:          decodeDiagramMovie.hs
+  Build-Depends:    base, containers, pipes, bytestring, text, tetrode-ephys, ffmpeg-light, io-streams, diagrams-lib, diagrams-rasterific, JuicyPixels, vector
 
 Executable watchpos
   Default-Language: Haskell2010
