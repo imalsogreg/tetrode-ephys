@@ -1,6 +1,6 @@
 Name:        tetrode-ephys
 Version:     0.1.0
-License:     GPL-3
+License:     BSD3
 License-File: LICENSE
 Copyright:       (c) 2013 Greg Hale
 Author:          Greg Hale
@@ -91,12 +91,6 @@ Executable clusters
                   text,
                   tetrode-ephys,
                   pipes-rt
-
-Executable decodeDiagramMovie
-  Default-Language: Haskell2010
-  Hs-Source-Dirs:   samples
-  Main-Is:          decodeDiagramMovie.hs
-  Build-Depends:    base, containers, pipes, bytestring, text, tetrode-ephys, ffmpeg-light, io-streams, diagrams-lib, diagrams-rasterific, JuicyPixels, vector
 
 Executable watchpos
   Default-Language: Haskell2010
